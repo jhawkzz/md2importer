@@ -1,6 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "MD2Asset.h"
 #include "RawMesh.h"
 
@@ -314,7 +312,7 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 			(Vert.V[ 2 ] * Model.Frames[ 0 ].Scale[ 2 ]) + Model.Frames[ 0 ].Translate[ 2 ]
 		);
 
-		OutRawMesh.VertexPositions.Emplace( VertPos );
+		OutRawMesh.VertexPositions.Add( VertPos );
 	}
 
 	for ( int i = 0; i < Model.Header.NumTris; i++ )
@@ -322,14 +320,14 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 		FMD2Triangle& CurrTri = Model.Triangles[ i ];
 
 		// triangle vert lookup
-		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 0 ] );
-		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 1 ] );
-		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 2 ] );
+		OutRawMesh.WedgeIndices.Add( CurrTri.Vertex[ 0 ] );
+		OutRawMesh.WedgeIndices.Add( CurrTri.Vertex[ 1 ] );
+		OutRawMesh.WedgeIndices.Add( CurrTri.Vertex[ 2 ] );
 
 		// vert coloring
-		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
-		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
-		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
+		OutRawMesh.WedgeColors.Add( WhiteVertex );
+		OutRawMesh.WedgeColors.Add( WhiteVertex );
+		OutRawMesh.WedgeColors.Add( WhiteVertex );
 
 		// normals
 		FMD2Vertex& Vert0 = Model.Frames[ 0 ].Verts[ CurrTri.Vertex[ 0 ] ];
@@ -340,22 +338,22 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 		FVector3f Normal1( -NormalLookup[ Vert1.NormalIndex ][ 0 ], -NormalLookup[ Vert1.NormalIndex ][ 1 ], -NormalLookup[ Vert1.NormalIndex ][ 2 ] );
 		FVector3f Normal2( -NormalLookup[ Vert2.NormalIndex ][ 0 ], -NormalLookup[ Vert2.NormalIndex ][ 1 ], -NormalLookup[ Vert2.NormalIndex ][ 2 ] );
 
-		OutRawMesh.WedgeTangentZ.Emplace( Normal0 );
-		OutRawMesh.WedgeTangentZ.Emplace( Normal1 );
-		OutRawMesh.WedgeTangentZ.Emplace( Normal2 );
+		OutRawMesh.WedgeTangentZ.Add( Normal0 );
+		OutRawMesh.WedgeTangentZ.Add( Normal1 );
+		OutRawMesh.WedgeTangentZ.Add( Normal2 );
 
 		// Tangents
-		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
-		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
-		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentX.Add( EmptyVector );
+		OutRawMesh.WedgeTangentX.Add( EmptyVector );
+		OutRawMesh.WedgeTangentX.Add( EmptyVector );
 
-		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
-		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
-		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentY.Add( EmptyVector );
+		OutRawMesh.WedgeTangentY.Add( EmptyVector );
+		OutRawMesh.WedgeTangentY.Add( EmptyVector );
 
 		// Material / Textures
-		OutRawMesh.FaceMaterialIndices.Emplace( 0 );
-		OutRawMesh.FaceSmoothingMasks.Emplace( 0xFFFFFFFF );
+		OutRawMesh.FaceMaterialIndices.Add( 0 );
+		OutRawMesh.FaceSmoothingMasks.Add( 0xFFFFFFFF );
 
 		// UVs
 		FVector2f Vert0UV(
@@ -373,8 +371,8 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 			(float)Model.Texcoords[ CurrTri.St[ 2 ] ].T / Model.Header.SkinHeight
 		);
 
-		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert0UV );
-		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert1UV );
-		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert2UV );
+		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert0UV );
+		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert1UV );
+		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert2UV );
 	}
 }

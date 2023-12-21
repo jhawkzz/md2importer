@@ -11,6 +11,9 @@
 #include "AssetToolsModule.h"
 #include "ObjectTools.h"
 #include "EditorFramework/AssetImportData.h"
+#include "Materials/Material.h"
+#include "Factories/MaterialFactoryNew.h"
+#include "Materials/MaterialExpressionTextureSample.h"
 
 UMD2AssetFactory::UMD2AssetFactory( )
 {
@@ -18,6 +21,34 @@ UMD2AssetFactory::UMD2AssetFactory( )
 	SupportedClass = UMD2Asset::StaticClass( );
 	bCreateNew = false;
 	bEditorImport = true;
+}
+
+UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
+	UObject* InParent,
+	FName InName,
+	EObjectFlags Flags,
+	const FString& Filename,
+	const TCHAR* Parms,
+	FFeedbackContext* Warn,
+	bool& bOutOperationCanceled )
+{
+
+	// TODO: Sort out package & asset names - it's all a mess right now
+	//TODO: Error handling
+	//TODO: Texture selection & materials
+
+	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
+
+	// todo: once the UI is in place, allow adding as many of these (up to 8) as the user wants	
+	UTexture* Texture = ImportPCXTexture( InParent, Filename, CreatedObjects );
+	UMaterial* Material = CreateMaterial( InParent, Filename, Texture, CreatedObjects );
+
+	TArray<TWeakObjectPtr<UMaterial>> Materials;
+	Materials.Add( Material );
+
+	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, Materials, CreatedObjects );
+
+	return StaticMesh;
 }
 
 UTexture* UMD2AssetFactory::ImportPCXTexture( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
@@ -128,7 +159,108 @@ UTexture* UMD2AssetFactory::ImportPCXTexture( UObject* InParent, const FString& 
 	return UnrealTexture;
 }
 
-UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
+UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent, const FString& Filename, UTexture* InSourceTexture, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
+{
+	FString InNameFileBasePath, InNamePartFileName, InNamePartExtension;
+	FPaths::Split( Filename, InNameFileBasePath, InNamePartFileName, InNamePartExtension );
+
+	// break out the parts of the file path
+	FString AbsoluteFilename = InNameFileBasePath + UTF8_TO_TCHAR( "/material" );
+	FString Extension = FPaths::GetExtension( AbsoluteFilename ).ToLower( );
+	FString MaterialName = FPaths::GetBaseFilename( AbsoluteFilename );
+	MaterialName = ObjectTools::SanitizeObjectName( MaterialName );
+
+	// set where to place the material
+	FString BasePackageName = FPackageName::GetLongPackagePath( InParent->GetOutermost( )->GetName( ) ) / MaterialName;
+	BasePackageName = UPackageTools::SanitizePackageName( BasePackageName );
+
+	UMaterial* ExistingMaterial = NULL;
+	UPackage* MaterialPackage = NULL;
+	// First check if the asset already exists.
+	{
+		FString ObjectPath = BasePackageName + TEXT( "." ) + MaterialName;
+		ExistingMaterial = LoadObject<UMaterial>( NULL, *ObjectPath, nullptr, LOAD_Quiet | LOAD_NoWarn );
+	}
+
+	if ( !ExistingMaterial )
+	{
+		const FString Suffix( TEXT( "" ) );
+
+		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>( "AssetTools" );
+		FString FinalPackageName;
+		AssetToolsModule.Get( ).CreateUniqueAssetName( BasePackageName, Suffix, FinalPackageName, MaterialName );
+
+		MaterialPackage = CreatePackage( *FinalPackageName );
+	}
+	else
+	{
+		MaterialPackage = MaterialPackage->GetOutermost( );
+	}
+
+	FString FinalFilePath;
+	if ( IFileManager::Get( ).FileExists( *AbsoluteFilename ) )
+	{
+		// try opening from absolute path
+		FinalFilePath = AbsoluteFilename;
+	}
+	else if ( IFileManager::Get( ).FileExists( *(InNameFileBasePath / MaterialName) ) )
+	{
+		// try fbx file base path + relative path
+		FinalFilePath = InNameFileBasePath / MaterialName;
+	}
+	else if ( IFileManager::Get( ).FileExists( *(InNameFileBasePath / AbsoluteFilename) ) )
+	{
+		// Some fbx files dont store the actual absolute filename as absolute and it is actually relative.  Try to get it relative to the FBX file we are importing
+		FinalFilePath = InNameFileBasePath / AbsoluteFilename;
+	}
+	else
+	{
+		UE_LOG( LogTemp, Display, TEXT( "Unable to find Material file %s" ), *AbsoluteFilename );
+	}
+
+	// create an unreal material asset
+	auto MaterialFactory = NewObject<UMaterialFactoryNew>( );
+	MaterialFactory->AddToRoot( );
+
+	const bool bAssetAlreadyExists = FindObject<UStaticMesh>( MaterialPackage, *MaterialName ) != nullptr;
+
+	UMaterial* UnrealMaterial = (UMaterial*)MaterialFactory->FactoryCreateNew(
+		UMaterial::StaticClass( ), MaterialPackage, *MaterialName, RF_Standalone | RF_Public, NULL, GWarn );
+
+	if ( UnrealMaterial != NULL )
+	{
+		OutCreatedObjects.Add( UnrealMaterial );
+
+		// Notify the asset registry
+		FAssetRegistryModule::AssetCreated( UnrealMaterial );
+
+		// Set the dirty flag so this package will get saved later
+		MaterialPackage->SetDirtyFlag( true );
+	}
+
+	if ( UnrealMaterial )
+	{
+		if ( InSourceTexture != nullptr )
+		{
+			UMaterialExpressionTextureSample* TextureExpression = NewObject<UMaterialExpressionTextureSample>( UnrealMaterial );
+			TextureExpression->Texture = InSourceTexture;
+			TextureExpression->SamplerType = SAMPLERTYPE_Color;
+			UnrealMaterial->GetExpressionCollection( ).AddExpression( TextureExpression );
+			UnrealMaterial->GetEditorOnlyData( )->BaseColor.Expression = TextureExpression;
+		}
+
+		// let the material update itself if necessary
+		UnrealMaterial->PreEditChange( NULL );
+		UnrealMaterial->PostEditChange( );
+	}
+
+	//todo: Is this safe to do when i'm returning a ref to the material?
+	MaterialFactory->RemoveFromRoot( );
+
+	return UnrealMaterial;
+}
+
+UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UMaterial>>& DefaultMaterials, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
 {
 	FString InNameFileBasePath, InNamePartFileName, InNamePartExtension;
 	FPaths::Split( Filename, InNameFileBasePath, InNamePartFileName, InNamePartExtension );
@@ -210,6 +342,12 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent, const FString&
 
 			SourceModel.RawMeshBulkData->SaveRawMesh( RawMesh );
 
+			for ( int i = 0; i < DefaultMaterials.Num( ); i++ )
+			{
+				StaticMesh->GetStaticMaterials().Add( DefaultMaterials[ i ].Get() );
+				StaticMesh->GetSectionInfoMap( ).Set( 0, 0, FMeshSectionInfo( i ) );
+			}
+
 			// Model Configuration - todo: expose these to a UI
 			SourceModel.BuildSettings.bRecomputeNormals = true;
 			SourceModel.BuildSettings.bRecomputeTangents = true;
@@ -237,29 +375,7 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent, const FString&
 	return StaticMesh;
 }
 
-UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
-	UObject* InParent,
-	FName InName,
-	EObjectFlags Flags,
-	const FString& Filename,
-	const TCHAR* Parms,
-	FFeedbackContext* Warn,
-	bool& bOutOperationCanceled )
-{
-
-	//TODO: Error handling
-	//TODO: Texture selection & materials
-
-	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
-
-	ImportPCXTexture( InParent, Filename, CreatedObjects );
-
-	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, CreatedObjects );
-
-	return StaticMesh;
-}
-
-void UMD2AssetFactory::CreateRawMesh( FRawMesh& OutRawMesh )
+void UMD2AssetFactory::TestCreateRawMesh( FRawMesh& OutRawMesh )
 {
 	FVector3f EmptyVector = FVector3f( 0, 0, 0 );
 	FColor WhiteVertex = FColor( 255, 255, 255, 255 );
@@ -315,7 +431,7 @@ void UMD2AssetFactory::CreateRawMesh( FRawMesh& OutRawMesh )
 	}
 }
 
-void UMD2AssetFactory::AttachToNewActor( const UStaticMesh& StaticMesh )
+void UMD2AssetFactory::TestAttachToNewActor( const UStaticMesh& StaticMesh )
 {
 	// JHM Note - uncomment this to create an actor and put the static mesh on it.
 	// Might want this for an eventual preview window?

@@ -7,28 +7,30 @@
 #include "MD2AssetFactory.generated.h"
 
 /**
- * 
+ *
  */
-UCLASS()
+UCLASS( )
 class MD2IMPORTEREDITOR_API UMD2AssetFactory : public UFactory
 {
-	GENERATED_BODY()
+	GENERATED_BODY( )
 
 public:
-	UMD2AssetFactory();
+	UMD2AssetFactory( );
 
-	virtual UObject* FactoryCreateFile(UClass* InClass,
+	virtual UObject* FactoryCreateFile( UClass* InClass,
 		UObject* InParent,
 		FName InName,
 		EObjectFlags Flags,
 		const FString& Filename,
 		const TCHAR* Parms,
 		FFeedbackContext* Warn,
-		bool& bOutOperationCanceled) override;
+		bool& bOutOperationCanceled ) override;
 
 private:
-	void CreateRawMesh(struct FRawMesh& OutRawMesh);
-	UTexture* ImportPCXTexture(UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
-	UStaticMesh* ImportMD2Asset(UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
-	void AttachToNewActor(const class UStaticMesh& StaticMesh);
+	UTexture* ImportPCXTexture( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+	UMaterial* CreateMaterial( UObject* InParent, const FString& Filename, UTexture* InSourceTexture, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+	UStaticMesh* ImportMD2Asset( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UMaterial>>& DefaultMaterials, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+
+	void TestCreateRawMesh( struct FRawMesh& OutRawMesh );
+	void TestAttachToNewActor( const class UStaticMesh& StaticMesh );
 };
