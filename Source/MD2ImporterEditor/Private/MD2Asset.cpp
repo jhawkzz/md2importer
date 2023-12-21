@@ -4,188 +4,377 @@
 #include "MD2Asset.h"
 #include "RawMesh.h"
 
-UMD2Asset::UMD2Asset()
+const float UMD2Asset::NormalLookup[ PRECAL_NORM ][ 3 ]
+{
+	{ -0.525731f, 0.000000f, 0.850651f },
+	{ -0.442863f, 0.238856f, 0.864188f },
+	{ -0.295242f, 0.000000f, 0.955423f },
+	{ -0.309017f, 0.500000f, 0.809017f },
+	{ -0.162460f, 0.262866f, 0.951056f },
+	{ 0.000000f, 0.000000f, 1.000000f },
+	{ 0.000000f, 0.850651f, 0.525731f },
+	{ -0.147621f, 0.716567f, 0.681718f },
+	{ 0.147621f, 0.716567f, 0.681718f },
+	{ 0.000000f, 0.525731f, 0.850651f },
+	{ 0.309017f, 0.500000f, 0.809017f },
+	{ 0.525731f, 0.000000f, 0.850651f },
+	{ 0.295242f, 0.000000f, 0.955423f },
+	{ 0.442863f, 0.238856f, 0.864188f },
+	{ 0.162460f, 0.262866f, 0.951056f },
+	{ -0.681718f, 0.147621f, 0.716567f },
+	{ -0.809017f, 0.309017f, 0.500000f },
+	{ -0.587785f, 0.425325f, 0.688191f },
+	{ -0.850651f, 0.525731f, 0.000000f },
+	{ -0.864188f, 0.442863f, 0.238856f },
+	{ -0.716567f, 0.681718f, 0.147621f },
+	{ -0.688191f, 0.587785f, 0.425325f },
+	{ -0.500000f, 0.809017f, 0.309017f },
+	{ -0.238856f, 0.864188f, 0.442863f },
+	{ -0.425325f, 0.688191f, 0.587785f },
+	{ -0.716567f, 0.681718f, -0.147621f },
+	{ -0.500000f, 0.809017f, -0.309017f },
+	{ -0.525731f, 0.850651f, 0.000000f },
+	{ 0.000000f, 0.850651f, -0.525731f },
+	{ -0.238856f, 0.864188f, -0.442863f },
+	{ 0.000000f, 0.955423f, -0.295242f },
+	{ -0.262866f, 0.951056f, -0.162460f },
+	{ 0.000000f, 1.000000f, 0.000000f },
+	{ 0.000000f, 0.955423f, 0.295242f },
+	{ -0.262866f, 0.951056f, 0.162460f },
+	{ 0.238856f, 0.864188f, 0.442863f },
+	{ 0.262866f, 0.951056f, 0.162460f },
+	{ 0.500000f, 0.809017f, 0.309017f },
+	{ 0.238856f, 0.864188f, -0.442863f },
+	{ 0.262866f, 0.951056f, -0.162460f },
+	{ 0.500000f, 0.809017f, -0.309017f },
+	{ 0.850651f, 0.525731f, 0.000000f },
+	{ 0.716567f, 0.681718f, 0.147621f },
+	{ 0.716567f, 0.681718f, -0.147621f },
+	{ 0.525731f, 0.850651f, 0.000000f },
+	{ 0.425325f, 0.688191f, 0.587785f },
+	{ 0.864188f, 0.442863f, 0.238856f },
+	{ 0.688191f, 0.587785f, 0.425325f },
+	{ 0.809017f, 0.309017f, 0.500000f },
+	{ 0.681718f, 0.147621f, 0.716567f },
+	{ 0.587785f, 0.425325f, 0.688191f },
+	{ 0.955423f, 0.295242f, 0.000000f },
+	{ 1.000000f, 0.000000f, 0.000000f },
+	{ 0.951056f, 0.162460f, 0.262866f },
+	{ 0.850651f, -0.525731f, 0.000000f },
+	{ 0.955423f, -0.295242f, 0.000000f },
+	{ 0.864188f, -0.442863f, 0.238856f },
+	{ 0.951056f, -0.162460f, 0.262866f },
+	{ 0.809017f, -0.309017f, 0.500000f },
+	{ 0.681718f, -0.147621f, 0.716567f },
+	{ 0.850651f, 0.000000f, 0.525731f },
+	{ 0.864188f, 0.442863f, -0.238856f },
+	{ 0.809017f, 0.309017f, -0.500000f },
+	{ 0.951056f, 0.162460f, -0.262866f },
+	{ 0.525731f, 0.000000f, -0.850651f },
+	{ 0.681718f, 0.147621f, -0.716567f },
+	{ 0.681718f, -0.147621f, -0.716567f },
+	{ 0.850651f, 0.000000f, -0.525731f },
+	{ 0.809017f, -0.309017f, -0.500000f },
+	{ 0.864188f, -0.442863f, -0.238856f },
+	{ 0.951056f, -0.162460f, -0.262866f },
+	{ 0.147621f, 0.716567f, -0.681718f },
+	{ 0.309017f, 0.500000f, -0.809017f },
+	{ 0.425325f, 0.688191f, -0.587785f },
+	{ 0.442863f, 0.238856f, -0.864188f },
+	{ 0.587785f, 0.425325f, -0.688191f },
+	{ 0.688191f, 0.587785f, -0.425325f },
+	{ -0.147621f, 0.716567f, -0.681718f },
+	{ -0.309017f, 0.500000f, -0.809017f },
+	{ 0.000000f, 0.525731f, -0.850651f },
+	{ -0.525731f, 0.000000f, -0.850651f },
+	{ -0.442863f, 0.238856f, -0.864188f },
+	{ -0.295242f, 0.000000f, -0.955423f },
+	{ -0.162460f, 0.262866f, -0.951056f },
+	{ 0.000000f, 0.000000f, -1.000000f },
+	{ 0.295242f, 0.000000f, -0.955423f },
+	{ 0.162460f, 0.262866f, -0.951056f },
+	{ -0.442863f, -0.238856f, -0.864188f },
+	{ -0.309017f, -0.500000f, -0.809017f },
+	{ -0.162460f, -0.262866f, -0.951056f },
+	{ 0.000000f, -0.850651f, -0.525731f },
+	{ -0.147621f, -0.716567f, -0.681718f },
+	{ 0.147621f, -0.716567f, -0.681718f },
+	{ 0.000000f, -0.525731f, -0.850651f },
+	{ 0.309017f, -0.500000f, -0.809017f },
+	{ 0.442863f, -0.238856f, -0.864188f },
+	{ 0.162460f, -0.262866f, -0.951056f },
+	{ 0.238856f, -0.864188f, -0.442863f },
+	{ 0.500000f, -0.809017f, -0.309017f },
+	{ 0.425325f, -0.688191f, -0.587785f },
+	{ 0.716567f, -0.681718f, -0.147621f },
+	{ 0.688191f, -0.587785f, -0.425325f },
+	{ 0.587785f, -0.425325f, -0.688191f },
+	{ 0.000000f, -0.955423f, -0.295242f },
+	{ 0.000000f, -1.000000f, 0.000000f },
+	{ 0.262866f, -0.951056f, -0.162460f },
+	{ 0.000000f, -0.850651f, 0.525731f },
+	{ 0.000000f, -0.955423f, 0.295242f },
+	{ 0.238856f, -0.864188f, 0.442863f },
+	{ 0.262866f, -0.951056f, 0.162460f },
+	{ 0.500000f, -0.809017f, 0.309017f },
+	{ 0.716567f, -0.681718f, 0.147621f },
+	{ 0.525731f, -0.850651f, 0.000000f },
+	{ -0.238856f, -0.864188f, -0.442863f },
+	{ -0.500000f, -0.809017f, -0.309017f },
+	{ -0.262866f, -0.951056f, -0.162460f },
+	{ -0.850651f, -0.525731f, 0.000000f },
+	{ -0.716567f, -0.681718f, -0.147621f },
+	{ -0.716567f, -0.681718f, 0.147621f },
+	{ -0.525731f, -0.850651f, 0.000000f },
+	{ -0.500000f, -0.809017f, 0.309017f },
+	{ -0.238856f, -0.864188f, 0.442863f },
+	{ -0.262866f, -0.951056f, 0.162460f },
+	{ -0.864188f, -0.442863f, 0.238856f },
+	{ -0.809017f, -0.309017f, 0.500000f },
+	{ -0.688191f, -0.587785f, 0.425325f },
+	{ -0.681718f, -0.147621f, 0.716567f },
+	{ -0.442863f, -0.238856f, 0.864188f },
+	{ -0.587785f, -0.425325f, 0.688191f },
+	{ -0.309017f, -0.500000f, 0.809017f },
+	{ -0.147621f, -0.716567f, 0.681718f },
+	{ -0.425325f, -0.688191f, 0.587785f },
+	{ -0.162460f, -0.262866f, 0.951056f },
+	{ 0.442863f, -0.238856f, 0.864188f },
+	{ 0.162460f, -0.262866f, 0.951056f },
+	{ 0.309017f, -0.500000f, 0.809017f },
+	{ 0.147621f, -0.716567f, 0.681718f },
+	{ 0.000000f, -0.525731f, 0.850651f },
+	{ 0.425325f, -0.688191f, 0.587785f },
+	{ 0.587785f, -0.425325f, 0.688191f },
+	{ 0.688191f, -0.587785f, 0.425325f },
+	{ -0.955423f, 0.295242f, 0.000000f },
+	{ -0.951056f, 0.162460f, 0.262866f },
+	{ -1.000000f, 0.000000f, 0.000000f },
+	{ -0.850651f, 0.000000f, 0.525731f },
+	{ -0.955423f, -0.295242f, 0.000000f },
+	{ -0.951056f, -0.162460f, 0.262866f },
+	{ -0.864188f, 0.442863f, -0.238856f },
+	{ -0.951056f, 0.162460f, -0.262866f },
+	{ -0.809017f, 0.309017f, -0.500000f },
+	{ -0.864188f, -0.442863f, -0.238856f },
+	{ -0.951056f, -0.162460f, -0.262866f },
+	{ -0.809017f, -0.309017f, -0.500000f },
+	{ -0.681718f, 0.147621f, -0.716567f },
+	{ -0.681718f, -0.147621f, -0.716567f },
+	{ -0.850651f, 0.000000f, -0.525731f },
+	{ -0.688191f, 0.587785f, -0.425325f },
+	{ -0.587785f, 0.425325f, -0.688191f },
+	{ -0.425325f, 0.688191f, -0.587785f },
+	{ -0.425325f, -0.688191f, -0.587785f },
+	{ -0.587785f, -0.425325f, -0.688191f },
+	{ -0.688191f, -0.587785f, -0.425325f }
+};
+
+UMD2Asset::UMD2Asset( )
 {
 }
 
-UMD2Asset::~UMD2Asset()
+UMD2Asset::~UMD2Asset( )
 {
-    UnLoad();
+	UnLoad( );
 }
 
-bool UMD2Asset::Load(TArray<uint8>* BinaryData)
+bool UMD2Asset::Load( TArray<uint8>* BinaryData )
 {
-    uint8* CurrReadPos = BinaryData->GetData();
+	uint8* CurrReadPos = BinaryData->GetData( );
 
-    // read the header
-    memcpy(&m_model.header, CurrReadPos, sizeof(m_model.header) );
+	// read the header
+	memcpy( &Model.Header, CurrReadPos, sizeof( Model.Header ) );
 
-    // verify version
-    if (m_model.header.ident != MODEL_IDENT || m_model.header.version != MODEL_VERSION) return false;
+	// verify version
+	if ( Model.Header.Ident != MODEL_IDENT || Model.Header.Version != MODEL_VERSION ) return false;
 
-    // allocate memory
-    m_model.skins = new md2_skin_t[m_model.header.num_skins]; //skins
-    m_model.texcoords = new md2_texCoord_t[m_model.header.num_st]; //texture coords
-    m_model.triangles = new md2_triangle_t[m_model.header.num_tris]; //triangles
-    m_model.frames = new md2_frame_t[m_model.header.num_frames]; //frames
-    m_model.glcmds = new int[m_model.header.num_glcmds]; //opengl commands
+	// allocate memory
+	Model.Skins = new FMD2Skin[ Model.Header.NumSkins ]; //skins
+	Model.Texcoords = new FMD2TexCoord[ Model.Header.NumSt ]; //texture coords
+	Model.Triangles = new FMD2Triangle[ Model.Header.NumTris ]; //triangles
+	Model.Frames = new FMD2Frame[ Model.Header.NumFrames ]; //frames
+	Model.Glcmds = new int[ Model.Header.NumGlcmds ]; //opengl commands
 
-    // read model data
-    CurrReadPos = BinaryData->GetData() + m_model.header.offset_skins;
-    memcpy( m_model.skins, CurrReadPos, m_model.header.num_skins * sizeof(md2_skin_t) );
+	// read model data
+	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetSkins;
+	memcpy( Model.Skins, CurrReadPos, Model.Header.NumSkins * sizeof( FMD2Skin ) );
 
-    CurrReadPos = BinaryData->GetData() + m_model.header.offset_st;
-    memcpy( m_model.texcoords, CurrReadPos, m_model.header.num_st * sizeof(md2_texCoord_t) );
+	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetSt;
+	memcpy( Model.Texcoords, CurrReadPos, Model.Header.NumSt * sizeof( FMD2TexCoord ) );
 
-    CurrReadPos = BinaryData->GetData() + m_model.header.offset_tris;
-    memcpy( m_model.triangles, CurrReadPos, m_model.header.num_tris * sizeof(md2_triangle_t) );
+	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetTris;
+	memcpy( Model.Triangles, CurrReadPos, Model.Header.NumTris * sizeof( FMD2Triangle ) );
 
-    CurrReadPos = BinaryData->GetData() + m_model.header.offset_glcmds;
-    memcpy( m_model.glcmds, CurrReadPos, m_model.header.num_glcmds * sizeof(int) );
+	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetGlcmds;
+	memcpy( Model.Glcmds, CurrReadPos, Model.Header.NumGlcmds * sizeof( int32 ) );
 
-    // read frames
-    CurrReadPos = BinaryData->GetData() + m_model.header.offset_frames;
+	// read frames
+	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetFrames;
 
-    uint32 i;
-    for (i = 0; i < (uint32)m_model.header.num_frames; i++)
-    {
-        // allocate verts for this frame
-        m_model.frames[i].verts = new md2_vertex_t[m_model.header.num_vertices];
+	uint32 i;
+	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
+	{
+		// allocate verts for this frame
+		Model.Frames[ i ].Verts = new FMD2Vertex[ Model.Header.NumVertices ];
 
-        // read frame data
-        memcpy(m_model.frames[i].scale, CurrReadPos, sizeof(vec3_t) );
-        CurrReadPos += sizeof(vec3_t);
+		// read frame data
+		memcpy( &Model.Frames[ i ].Scale, CurrReadPos, sizeof( FVector3f ) );
+		CurrReadPos += sizeof( FVector3f );
 
-        memcpy(m_model.frames[i].translate, CurrReadPos, sizeof(vec3_t));
-        CurrReadPos += sizeof(vec3_t);
+		memcpy( &Model.Frames[ i ].Translate, CurrReadPos, sizeof( FVector3f ) );
+		CurrReadPos += sizeof( FVector3f );
 
-        memcpy(m_model.frames[i].name, CurrReadPos, sizeof(char) * 16);
-        CurrReadPos += sizeof(char) * 16;
+		memcpy( Model.Frames[ i ].Name, CurrReadPos, sizeof( char ) * 16 );
+		CurrReadPos += sizeof( int8 ) * 16;
 
-        memcpy(m_model.frames[i].verts, CurrReadPos, sizeof(md2_vertex_t) * m_model.header.num_vertices );
-        CurrReadPos += sizeof(md2_vertex_t) * m_model.header.num_vertices;
-    }
+		memcpy( Model.Frames[ i ].Verts, CurrReadPos, sizeof( FMD2Vertex ) * Model.Header.NumVertices );
+		CurrReadPos += sizeof( FMD2Vertex ) * Model.Header.NumVertices;
+	}
 
-    // todo:
-    //Load_Textures(modelDir);
-
-    return true;
+	return true;
 }
 
-void UMD2Asset::UnLoad(void)
+void UMD2Asset::UnLoad( void )
 {
-    uint32 i;
+	uint32 i;
 
-    //remove verts 
-    for (i = 0; i < (uint32)m_model.header.num_frames; i++)
-    {
-        delete[] m_model.frames[i].verts;
-    }
+	//remove verts 
+	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
+	{
+		delete[] Model.Frames[ i ].Verts;
+	}
 
-    // remove the skins
-    if (m_skin_data.p_tex != nullptr)
-    {
-        for (i = 0; i < (uint32)m_model.header.num_skins; i++)
-        {
-            delete[] m_skin_data.p_tex[i];
-        }
+	// remove the skins
+	if ( SkinData.PTex != nullptr )
+	{
+		for ( i = 0; i < (uint32)Model.Header.NumSkins; i++ )
+		{
+			delete[] SkinData.PTex[ i ];
+		}
 
-        delete[] m_skin_data.p_tex;
-    }
+		delete[] SkinData.PTex;
+	}
 
-    // cleanup the rest
-    if (m_model.glcmds != nullptr)
-    {
-        delete[] m_model.glcmds;
-    }
+	// cleanup the rest
+	if ( Model.Glcmds != nullptr )
+	{
+		delete[] Model.Glcmds;
+	}
 
-    if (m_model.frames != nullptr)
-    {
-        delete[] m_model.frames;
-    }
+	if ( Model.Frames != nullptr )
+	{
+		delete[] Model.Frames;
+	}
 
-    if (m_model.triangles != nullptr)
-    {
-        delete[] m_model.triangles;
-    }
+	if ( Model.Triangles != nullptr )
+	{
+		delete[] Model.Triangles;
+	}
 
-    if (m_model.texcoords != nullptr)
-    {
-        delete[] m_model.texcoords;
-    }
+	if ( Model.Texcoords != nullptr )
+	{
+		delete[] Model.Texcoords;
+	}
 
-    if (m_model.skins != nullptr)
-    {
-        delete[] m_model.skins;
-    }
+	if ( Model.Skins != nullptr )
+	{
+		delete[] Model.Skins;
+	}
 
-    memset(&m_model, 0, sizeof(m_model));
+	memset( &Model, 0, sizeof( Model ) );
 }
 
-void UMD2Asset::Convert(FRawMesh& OutRawMesh)
+void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 {
-    FVector3f EmptyVector = FVector3f(0, 0, 0);
-    FColor WhiteVertex = FColor(255, 255, 255, 255);
+	FVector3f EmptyVector = FVector3f( 0, 0, 0 );
+	FColor WhiteVertex = FColor( 255, 255, 255, 255 );
 
-    OutRawMesh.VertexPositions.Reserve( m_model.header.num_vertices );
-    OutRawMesh.WedgeIndices.Reserve( m_model.header.num_tris * 3 );
-    OutRawMesh.WedgeColors.Reserve(m_model.header.num_tris * 3 );
-    /*OutRawMesh.WedgeTangentX.Reserve(m_model.header.num_tris * 3 );
-    OutRawMesh.WedgeTangentY.Reserve(m_model.header.num_tris * 3 );
-    OutRawMesh.WedgeTangentZ.Reserve(m_model.header.num_tris * 3 );*/
-    OutRawMesh.FaceMaterialIndices.Reserve(m_model.header.num_tris);
-    OutRawMesh.FaceSmoothingMasks.Reserve(m_model.header.num_tris);
+	OutRawMesh.VertexPositions.Reserve( Model.Header.NumVertices );
+	OutRawMesh.WedgeIndices.Reserve( Model.Header.NumTris * 3 );
+	OutRawMesh.WedgeColors.Reserve( Model.Header.NumTris * 3 );
+	OutRawMesh.WedgeTangentX.Reserve( Model.Header.NumTris * 3 );
+	OutRawMesh.WedgeTangentY.Reserve( Model.Header.NumTris * 3 );
+	OutRawMesh.WedgeTangentZ.Reserve( Model.Header.NumTris * 3 );
+	OutRawMesh.FaceMaterialIndices.Reserve( Model.Header.NumTris );
+	OutRawMesh.FaceSmoothingMasks.Reserve( Model.Header.NumTris );
+	OutRawMesh.WedgeTexCoords[ 0 ].Reserve( Model.Header.NumTris * 3 ); //just one set of UVs
 
-    for (int i = 0; i < MAX_MESH_TEXTURE_COORDS; i++)
-    {
-        OutRawMesh.WedgeTexCoords[i].Reserve(m_model.header.num_tris * 3);
-    }
+	// for now just use the first frame of animation
 
-    // for now just use the first frame of animation
+	// the actual vert data is stored in the frame
+	for ( int i = 0; i < Model.Header.NumVertices; i++ )
+	{
+		FMD2Vertex& Vert = Model.Frames[ 0 ].Verts[ i ];
 
-    // the actual vert data is stored in the frame
-    for (int i = 0; i < m_model.header.num_vertices; i++)
-    {
-        md2_vertex_t& vert = m_model.frames[0].verts[i];
-        
-        //todo: Y and Z flipped?
-        FVector3f vertPos( (vert.v[0] * m_model.frames->scale[0]) + m_model.frames[0].translate[0],
-                           (vert.v[1] * m_model.frames->scale[1]) + m_model.frames[0].translate[1],
-                           (vert.v[2] * m_model.frames->scale[2]) + m_model.frames[0].translate[2] );
-        
-        OutRawMesh.VertexPositions.Emplace( vertPos );
-    }
+		// Ironically, for most engines Y and Z need to be flipped. But for UE with Z being up, they dont!
+		FVector3f VertPos(
+			(Vert.V[ 0 ] * Model.Frames[ 0 ].Scale[ 0 ]) + Model.Frames[ 0 ].Translate[ 0 ],
+			(Vert.V[ 1 ] * Model.Frames[ 0 ].Scale[ 1 ]) + Model.Frames[ 0 ].Translate[ 1 ],
+			(Vert.V[ 2 ] * Model.Frames[ 0 ].Scale[ 2 ]) + Model.Frames[ 0 ].Translate[ 2 ]
+		);
 
-    for (int i = 0; i < m_model.header.num_tris; i++)
-    {
-        OutRawMesh.WedgeIndices.Emplace(m_model.triangles[i].vertex[0]);
-        OutRawMesh.WedgeIndices.Emplace(m_model.triangles[i].vertex[1]);
-        OutRawMesh.WedgeIndices.Emplace(m_model.triangles[i].vertex[2]);
+		OutRawMesh.VertexPositions.Emplace( VertPos );
+	}
 
-        OutRawMesh.WedgeColors.Emplace(WhiteVertex);
-        OutRawMesh.WedgeColors.Emplace(WhiteVertex);
-        OutRawMesh.WedgeColors.Emplace(WhiteVertex);
+	for ( int i = 0; i < Model.Header.NumTris; i++ )
+	{
+		FMD2Triangle& CurrTri = Model.Triangles[ i ];
 
-        /*OutRawMesh.WedgeTangentX.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentX.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentX.Emplace(EmptyVector);
+		// triangle vert lookup
+		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 0 ] );
+		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 1 ] );
+		OutRawMesh.WedgeIndices.Emplace( CurrTri.Vertex[ 2 ] );
 
-        OutRawMesh.WedgeTangentY.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentY.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentY.Emplace(EmptyVector);
+		// vert coloring
+		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
+		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
+		OutRawMesh.WedgeColors.Emplace( WhiteVertex );
 
-        OutRawMesh.WedgeTangentZ.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentZ.Emplace(EmptyVector);
-        OutRawMesh.WedgeTangentZ.Emplace(EmptyVector);*/
+		// normals
+		FMD2Vertex& Vert0 = Model.Frames[ 0 ].Verts[ CurrTri.Vertex[ 0 ] ];
+		FMD2Vertex& Vert1 = Model.Frames[ 0 ].Verts[ CurrTri.Vertex[ 1 ] ];
+		FMD2Vertex& Vert2 = Model.Frames[ 0 ].Verts[ CurrTri.Vertex[ 2 ] ];
 
-        OutRawMesh.FaceMaterialIndices.Emplace(0);
-        OutRawMesh.FaceSmoothingMasks.Emplace(0xFFFFFFFF); // Phong ?
+		FVector3f Normal0( -NormalLookup[ Vert0.NormalIndex ][ 0 ], -NormalLookup[ Vert0.NormalIndex ][ 1 ], -NormalLookup[ Vert0.NormalIndex ][ 2 ] );
+		FVector3f Normal1( -NormalLookup[ Vert1.NormalIndex ][ 0 ], -NormalLookup[ Vert1.NormalIndex ][ 1 ], -NormalLookup[ Vert1.NormalIndex ][ 2 ] );
+		FVector3f Normal2( -NormalLookup[ Vert2.NormalIndex ][ 0 ], -NormalLookup[ Vert2.NormalIndex ][ 1 ], -NormalLookup[ Vert2.NormalIndex ][ 2 ] );
 
-        for (int UVIndex = 0; UVIndex < MAX_MESH_TEXTURE_COORDS; UVIndex++)
-        {
-            OutRawMesh.WedgeTexCoords[UVIndex].Emplace(FVector2f(0.0f, 0.0f));
-            OutRawMesh.WedgeTexCoords[UVIndex].Emplace(FVector2f(0.0f, 0.0f));
-            OutRawMesh.WedgeTexCoords[UVIndex].Emplace(FVector2f(0.0f, 0.0f));
-        }
-    }
+		OutRawMesh.WedgeTangentZ.Emplace( Normal0 );
+		OutRawMesh.WedgeTangentZ.Emplace( Normal1 );
+		OutRawMesh.WedgeTangentZ.Emplace( Normal2 );
+
+		// Tangents
+		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentX.Emplace( EmptyVector );
+
+		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
+		OutRawMesh.WedgeTangentY.Emplace( EmptyVector );
+
+		// Material / Textures
+		OutRawMesh.FaceMaterialIndices.Emplace( 0 );
+		OutRawMesh.FaceSmoothingMasks.Emplace( 0xFFFFFFFF );
+
+		// UVs
+		FVector2f Vert0UV(
+			(float)Model.Texcoords[ CurrTri.St[ 0 ] ].S / Model.Header.SkinWidth,
+			(float)Model.Texcoords[ CurrTri.St[ 0 ] ].T / Model.Header.SkinHeight
+		);
+
+		FVector2f Vert1UV(
+			(float)Model.Texcoords[ CurrTri.St[ 1 ] ].S / Model.Header.SkinWidth,
+			(float)Model.Texcoords[ CurrTri.St[ 1 ] ].T / Model.Header.SkinHeight
+		);
+
+		FVector2f Vert2UV(
+			(float)Model.Texcoords[ CurrTri.St[ 2 ] ].S / Model.Header.SkinWidth,
+			(float)Model.Texcoords[ CurrTri.St[ 2 ] ].T / Model.Header.SkinHeight
+		);
+
+		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert0UV );
+		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert1UV );
+		OutRawMesh.WedgeTexCoords[ 0 ].Emplace( Vert2UV );
+	}
 }

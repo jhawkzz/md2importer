@@ -18,282 +18,113 @@
 
 // This loads the Quake II model format.
 // This information taken from the glorious site: http://tfc.duke.free.fr/coding/md2-specs-en.html
-
-static float normal_lookup[PRECAL_NORM][3] =
+struct FMD2Header
 {
-   { -0.525731f, 0.000000f, 0.850651f },
-   { -0.442863f, 0.238856f, 0.864188f },
-   { -0.295242f, 0.000000f, 0.955423f },
-   { -0.309017f, 0.500000f, 0.809017f },
-   { -0.162460f, 0.262866f, 0.951056f },
-   { 0.000000f, 0.000000f, 1.000000f },
-   { 0.000000f, 0.850651f, 0.525731f },
-   { -0.147621f, 0.716567f, 0.681718f },
-   { 0.147621f, 0.716567f, 0.681718f },
-   { 0.000000f, 0.525731f, 0.850651f },
-   { 0.309017f, 0.500000f, 0.809017f },
-   { 0.525731f, 0.000000f, 0.850651f },
-   { 0.295242f, 0.000000f, 0.955423f },
-   { 0.442863f, 0.238856f, 0.864188f },
-   { 0.162460f, 0.262866f, 0.951056f },
-   { -0.681718f, 0.147621f, 0.716567f },
-   { -0.809017f, 0.309017f, 0.500000f },
-   { -0.587785f, 0.425325f, 0.688191f },
-   { -0.850651f, 0.525731f, 0.000000f },
-   { -0.864188f, 0.442863f, 0.238856f },
-   { -0.716567f, 0.681718f, 0.147621f },
-   { -0.688191f, 0.587785f, 0.425325f },
-   { -0.500000f, 0.809017f, 0.309017f },
-   { -0.238856f, 0.864188f, 0.442863f },
-   { -0.425325f, 0.688191f, 0.587785f },
-   { -0.716567f, 0.681718f, -0.147621f },
-   { -0.500000f, 0.809017f, -0.309017f },
-   { -0.525731f, 0.850651f, 0.000000f },
-   { 0.000000f, 0.850651f, -0.525731f },
-   { -0.238856f, 0.864188f, -0.442863f },
-   { 0.000000f, 0.955423f, -0.295242f },
-   { -0.262866f, 0.951056f, -0.162460f },
-   { 0.000000f, 1.000000f, 0.000000f },
-   { 0.000000f, 0.955423f, 0.295242f },
-   { -0.262866f, 0.951056f, 0.162460f },
-   { 0.238856f, 0.864188f, 0.442863f },
-   { 0.262866f, 0.951056f, 0.162460f },
-   { 0.500000f, 0.809017f, 0.309017f },
-   { 0.238856f, 0.864188f, -0.442863f },
-   { 0.262866f, 0.951056f, -0.162460f },
-   { 0.500000f, 0.809017f, -0.309017f },
-   { 0.850651f, 0.525731f, 0.000000f },
-   { 0.716567f, 0.681718f, 0.147621f },
-   { 0.716567f, 0.681718f, -0.147621f },
-   { 0.525731f, 0.850651f, 0.000000f },
-   { 0.425325f, 0.688191f, 0.587785f },
-   { 0.864188f, 0.442863f, 0.238856f },
-   { 0.688191f, 0.587785f, 0.425325f },
-   { 0.809017f, 0.309017f, 0.500000f },
-   { 0.681718f, 0.147621f, 0.716567f },
-   { 0.587785f, 0.425325f, 0.688191f },
-   { 0.955423f, 0.295242f, 0.000000f },
-   { 1.000000f, 0.000000f, 0.000000f },
-   { 0.951056f, 0.162460f, 0.262866f },
-   { 0.850651f, -0.525731f, 0.000000f },
-   { 0.955423f, -0.295242f, 0.000000f },
-   { 0.864188f, -0.442863f, 0.238856f },
-   { 0.951056f, -0.162460f, 0.262866f },
-   { 0.809017f, -0.309017f, 0.500000f },
-   { 0.681718f, -0.147621f, 0.716567f },
-   { 0.850651f, 0.000000f, 0.525731f },
-   { 0.864188f, 0.442863f, -0.238856f },
-   { 0.809017f, 0.309017f, -0.500000f },
-   { 0.951056f, 0.162460f, -0.262866f },
-   { 0.525731f, 0.000000f, -0.850651f },
-   { 0.681718f, 0.147621f, -0.716567f },
-   { 0.681718f, -0.147621f, -0.716567f },
-   { 0.850651f, 0.000000f, -0.525731f },
-   { 0.809017f, -0.309017f, -0.500000f },
-   { 0.864188f, -0.442863f, -0.238856f },
-   { 0.951056f, -0.162460f, -0.262866f },
-   { 0.147621f, 0.716567f, -0.681718f },
-   { 0.309017f, 0.500000f, -0.809017f },
-   { 0.425325f, 0.688191f, -0.587785f },
-   { 0.442863f, 0.238856f, -0.864188f },
-   { 0.587785f, 0.425325f, -0.688191f },
-   { 0.688191f, 0.587785f, -0.425325f },
-   { -0.147621f, 0.716567f, -0.681718f },
-   { -0.309017f, 0.500000f, -0.809017f },
-   { 0.000000f, 0.525731f, -0.850651f },
-   { -0.525731f, 0.000000f, -0.850651f },
-   { -0.442863f, 0.238856f, -0.864188f },
-   { -0.295242f, 0.000000f, -0.955423f },
-   { -0.162460f, 0.262866f, -0.951056f },
-   { 0.000000f, 0.000000f, -1.000000f },
-   { 0.295242f, 0.000000f, -0.955423f },
-   { 0.162460f, 0.262866f, -0.951056f },
-   { -0.442863f, -0.238856f, -0.864188f },
-   { -0.309017f, -0.500000f, -0.809017f },
-   { -0.162460f, -0.262866f, -0.951056f },
-   { 0.000000f, -0.850651f, -0.525731f },
-   { -0.147621f, -0.716567f, -0.681718f },
-   { 0.147621f, -0.716567f, -0.681718f },
-   { 0.000000f, -0.525731f, -0.850651f },
-   { 0.309017f, -0.500000f, -0.809017f },
-   { 0.442863f, -0.238856f, -0.864188f },
-   { 0.162460f, -0.262866f, -0.951056f },
-   { 0.238856f, -0.864188f, -0.442863f },
-   { 0.500000f, -0.809017f, -0.309017f },
-   { 0.425325f, -0.688191f, -0.587785f },
-   { 0.716567f, -0.681718f, -0.147621f },
-   { 0.688191f, -0.587785f, -0.425325f },
-   { 0.587785f, -0.425325f, -0.688191f },
-   { 0.000000f, -0.955423f, -0.295242f },
-   { 0.000000f, -1.000000f, 0.000000f },
-   { 0.262866f, -0.951056f, -0.162460f },
-   { 0.000000f, -0.850651f, 0.525731f },
-   { 0.000000f, -0.955423f, 0.295242f },
-   { 0.238856f, -0.864188f, 0.442863f },
-   { 0.262866f, -0.951056f, 0.162460f },
-   { 0.500000f, -0.809017f, 0.309017f },
-   { 0.716567f, -0.681718f, 0.147621f },
-   { 0.525731f, -0.850651f, 0.000000f },
-   { -0.238856f, -0.864188f, -0.442863f },
-   { -0.500000f, -0.809017f, -0.309017f },
-   { -0.262866f, -0.951056f, -0.162460f },
-   { -0.850651f, -0.525731f, 0.000000f },
-   { -0.716567f, -0.681718f, -0.147621f },
-   { -0.716567f, -0.681718f, 0.147621f },
-   { -0.525731f, -0.850651f, 0.000000f },
-   { -0.500000f, -0.809017f, 0.309017f },
-   { -0.238856f, -0.864188f, 0.442863f },
-   { -0.262866f, -0.951056f, 0.162460f },
-   { -0.864188f, -0.442863f, 0.238856f },
-   { -0.809017f, -0.309017f, 0.500000f },
-   { -0.688191f, -0.587785f, 0.425325f },
-   { -0.681718f, -0.147621f, 0.716567f },
-   { -0.442863f, -0.238856f, 0.864188f },
-   { -0.587785f, -0.425325f, 0.688191f },
-   { -0.309017f, -0.500000f, 0.809017f },
-   { -0.147621f, -0.716567f, 0.681718f },
-   { -0.425325f, -0.688191f, 0.587785f },
-   { -0.162460f, -0.262866f, 0.951056f },
-   { 0.442863f, -0.238856f, 0.864188f },
-   { 0.162460f, -0.262866f, 0.951056f },
-   { 0.309017f, -0.500000f, 0.809017f },
-   { 0.147621f, -0.716567f, 0.681718f },
-   { 0.000000f, -0.525731f, 0.850651f },
-   { 0.425325f, -0.688191f, 0.587785f },
-   { 0.587785f, -0.425325f, 0.688191f },
-   { 0.688191f, -0.587785f, 0.425325f },
-   { -0.955423f, 0.295242f, 0.000000f },
-   { -0.951056f, 0.162460f, 0.262866f },
-   { -1.000000f, 0.000000f, 0.000000f },
-   { -0.850651f, 0.000000f, 0.525731f },
-   { -0.955423f, -0.295242f, 0.000000f },
-   { -0.951056f, -0.162460f, 0.262866f },
-   { -0.864188f, 0.442863f, -0.238856f },
-   { -0.951056f, 0.162460f, -0.262866f },
-   { -0.809017f, 0.309017f, -0.500000f },
-   { -0.864188f, -0.442863f, -0.238856f },
-   { -0.951056f, -0.162460f, -0.262866f },
-   { -0.809017f, -0.309017f, -0.500000f },
-   { -0.681718f, 0.147621f, -0.716567f },
-   { -0.681718f, -0.147621f, -0.716567f },
-   { -0.850651f, 0.000000f, -0.525731f },
-   { -0.688191f, 0.587785f, -0.425325f },
-   { -0.587785f, 0.425325f, -0.688191f },
-   { -0.425325f, 0.688191f, -0.587785f },
-   { -0.425325f, -0.688191f, -0.587785f },
-   { -0.587785f, -0.425325f, -0.688191f },
-   { -0.688191f, -0.587785f, -0.425325f }
-};
+	int32 Ident;          /* magic number: "IDP2" */
+	int32 Version;        /* version: must be 8 */
 
-struct md2_header_t
-{
-    int ident;          /* magic number: "IDP2" */
-    int version;        /* version: must be 8 */
+	int32 SkinWidth;      /* texture width */
+	int32 SkinHeight;     /* texture height */
 
-    int skinwidth;      /* texture width */
-    int skinheight;     /* texture height */
+	int32 FrameSize;      /* size in bytes of a frame */
 
-    int framesize;      /* size in bytes of a frame */
+	int32 NumSkins;      /* number of skins */
+	int32 NumVertices;   /* number of vertices per frame */
+	int32 NumSt;         /* number of texture coordinates */
+	int32 NumTris;       /* number of triangles */
+	int32 NumGlcmds;     /* number of opengl commands */
+	int32 NumFrames;     /* number of frames */
 
-    int num_skins;      /* number of skins */
-    int num_vertices;   /* number of vertices per frame */
-    int num_st;         /* number of texture coordinates */
-    int num_tris;       /* number of triangles */
-    int num_glcmds;     /* number of opengl commands */
-    int num_frames;     /* number of frames */
-
-    int offset_skins;   /* offset skin data */
-    int offset_st;      /* offset texture coordinate data */
-    int offset_tris;    /* offset triangle data */
-    int offset_frames;  /* offset frame data */
-    int offset_glcmds;  /* offset OpenGL command data */
-    int offset_end;     /* offset end of file */
+	int32 OffsetSkins;   /* offset skin data */
+	int32 OffsetSt;      /* offset texture coordinate data */
+	int32 OffsetTris;    /* offset triangle data */
+	int32 OffsetFrames;  /* offset frame data */
+	int32 OffsetGlcmds;  /* offset OpenGL command data */
+	int32 OffsetEnd;     /* offset end of file */
 
 };
-
-/* vector */
-typedef float vec3_t[3];
 
 /* texture name */
-struct md2_skin_t
+struct FMD2Skin
 {
-    char name[64];   /* texture file name */
-
+	char Name[ 64 ];   /* texture file name */
 };
 
 /* texture coords */
-struct md2_texCoord_t
+struct FMD2TexCoord
 {
-    short s;
-    short t;
+	int16 S;
+	int16 T;
 
 };
 
 /* triangle data */
-struct md2_triangle_t
+struct FMD2Triangle
 {
-    unsigned short vertex[3];   /* vertex indices of the triangle */
-    unsigned short st[3];       /* tex. coord. indices */
+	uint16 Vertex[ 3 ];   /* vertex indices of the triangle */
+	uint16 St[ 3 ];       /* tex. coord. indices */
 
 };
 
 /* vertex data */
-struct md2_vertex_t
+struct FMD2Vertex
 {
-    unsigned char v[3];         /* position */
-    unsigned char normalIndex;  /* normal vector index */
+	uint8 V[ 3 ];         /* position */
+	uint8 NormalIndex;  /* normal vector index */
 
 };
 
 /* frame data */
-struct md2_frame_t
+struct FMD2Frame
 {
-    vec3_t          scale;      /* scale factor */
-    vec3_t          translate;  /* translation vector */
-    char            name[16];   /* frame name */
-    md2_vertex_t* verts;     /* list of frame's vertices */
+	FVector3f   Scale;      /* scale factor */
+	FVector3f   Translate;  /* translation vector */
+	int8        Name[ 16 ];   /* frame name */
+	FMD2Vertex* Verts;     /* list of frame's vertices */
 
 };
 
-struct md2_skin_data
+struct FMD2SkinData
 {
-    short** p_tex{ nullptr };
-    int      tex_size;
+	int16** PTex{ nullptr };
+	int32   TexSize;
 };
 
 /* md2 model structure */
-struct  md2_model_t
+struct  FMD2Model
 {
-    md2_header_t header;
+	FMD2Header Header;
 
-    md2_skin_t* skins { nullptr };
-    md2_texCoord_t* texcoords { nullptr };
-    md2_triangle_t* triangles { nullptr };
-    md2_frame_t* frames { nullptr };
-    int* glcmds { nullptr };
-
+	FMD2Skin* Skins{ nullptr };
+	FMD2TexCoord* Texcoords{ nullptr };
+	FMD2Triangle* Triangles{ nullptr };
+	FMD2Frame* Frames{ nullptr };
+	int32* Glcmds{ nullptr };
 };
 
 /**
- * 
+ *
  */
-UCLASS()
+UCLASS( )
 class MD2IMPORTEREDITOR_API UMD2Asset : public UObject
 {
-	GENERATED_BODY()
-	
+	GENERATED_BODY( )
+
 public:
-	UMD2Asset();
-    ~UMD2Asset();
+	UMD2Asset( );
+	~UMD2Asset( );
 
-    bool Load(TArray<uint8>* BinaryData);
-    void UnLoad(void);
+	bool Load( TArray<uint8>* BinaryData );
+	void UnLoad( void );
 
-    void Convert(struct FRawMesh& OutRawMesh);
+	void Convert( struct FRawMesh& OutRawMesh );
 
 private:
 
-    md2_model_t    m_model;
-    md2_skin_data  m_skin_data;
+	FMD2Model    Model;
+	FMD2SkinData SkinData;
+
+private:
+	static const float NormalLookup[ PRECAL_NORM ][ 3 ];
 
 };
