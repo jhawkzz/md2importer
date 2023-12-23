@@ -27,9 +27,12 @@ public:
 		bool& bOutOperationCanceled ) override;
 
 private:
-	UTexture* ImportPCXTexture( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
-	UMaterial* CreateMaterial( UObject* InParent, const FString& Filename, UTexture* InSourceTexture, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
-	UStaticMesh* ImportMD2Asset( UObject* InParent, const FString& Filename, TArray<TWeakObjectPtr<UMaterial>>& DefaultMaterials, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+	UTexture* ImportTexture( UObject* InParent, const FString& TextureFullFilename, FString& InOutTextureAssetName, const FString& TextureExtension, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+	UMaterial* CreateMaterial( UObject* InParent, UTexture* InSourceTexture, FString& InOutMaterialAssetName, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+	UStaticMesh* ImportMD2Asset( UObject* InParent, const FString& MD2FullFilename, FString& InOutStaticMeshAssetName, TArray<TWeakObjectPtr<UMaterial>>& DefaultMaterials, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
+
+	void EnumeratePCXFiles( const FString& SearchFileBasePath, TArray<FString>& OutPCXFiles );
+	void BuildSkinAssetNames( const TArray<FString>& PCXFiles, const FString& ParentMeshName, TArray<struct FMD2SkinImportData>& OutSkinImports );
 
 	void TestCreateRawMesh( struct FRawMesh& OutRawMesh );
 	void TestAttachToNewActor( const class UStaticMesh& StaticMesh );
