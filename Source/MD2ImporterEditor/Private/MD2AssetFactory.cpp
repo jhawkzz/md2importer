@@ -15,8 +15,11 @@
 #include "Factories/MaterialFactoryNew.h"
 #include "Materials/MaterialExpressionTextureSample.h"
 #include "HAL/FileManagerGeneric.h"
+#include "HAL/PlatformApplicationMisc.h"
+#include "Interfaces/IMainFrameModule.h"
+#include "MD2OptionsWindow.h"
 
-// note - so much help can be found in FbxMaterialImport.cpp
+// note - so much help can be found in FbxMaterialImport.cpp (texture/material creation) and FbxMainImport.cpp (UI)
 
 // Helper struct to organize the texture / material / filenames
 struct FMD2SkinImportData
@@ -36,6 +39,54 @@ UMD2AssetFactory::UMD2AssetFactory( )
 	bEditorImport = true;
 }
 
+void UMD2AssetFactory::GetImportOptions( )
+{
+	TSharedPtr<SWindow> ParentWindow;
+
+	if ( FModuleManager::Get( ).IsModuleLoaded( "MainFrame" ) )
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>( "MainFrame" );
+		ParentWindow = MainFrame.GetParentWindow( );
+	}
+
+	// Compute centered window position based on max window size, which include when all categories are expanded
+	const float MD2ImportWindowWidth = 450.0f;
+	const float MD2ImportWindowHeight = 750.0f;
+	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
+
+
+	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
+	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
+	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
+
+	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
+	MD2ImportWindowSize *= ScaleFactor;
+
+	FVector2D WindowPosition = (DisplayTopLeft + (DisplaySize - MD2ImportWindowSize) / 2.0f) / ScaleFactor;
+
+
+	TSharedRef<SWindow> Window = SNew( SWindow )
+		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOpionsTitle", "MD2 Import Options" ) )
+		.SizingRule( ESizingRule::Autosized )
+		.AutoCenter( EAutoCenter::None )
+		.ClientSize( MD2ImportWindowSize )
+		.ScreenPosition( WindowPosition );
+	
+	FString FullPath = TEXT("C:\\");
+	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
+	Window->SetContent
+	(
+		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
+		.WidgetWindow( Window )
+		.FullPath( FText::FromString( FullPath ) )
+		.MaxWindowHeight( MD2ImportWindowHeight )
+		.MaxWindowWidth( MD2ImportWindowWidth )
+	);
+
+	// @todo: we can make this slow as showing progress bar later
+	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
+}
+
 UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	UObject* InParent,
 	FName InName,
@@ -45,6 +96,8 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	FFeedbackContext* Warn,
 	bool& bOutOperationCanceled )
 {
+	//GetImportOptions( );
+
 	//Importing is done and working, including re-import!
 	//TODO: There are two minor bugs on static mesh: 
 	// 1. I can't seem to rename the created asset. If it doesn't match the filename, Content Drawer won't show it.

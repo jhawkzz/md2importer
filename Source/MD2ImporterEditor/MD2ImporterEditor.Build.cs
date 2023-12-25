@@ -41,6 +41,9 @@ public class MD2ImporterEditor : ModuleRules
 				/*JHM: Custom imports*/
 				"UnrealEd",
 				"RawMesh",
+				"InputCore",
+				"ApplicationCore",
+				"ToolWidgets",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
