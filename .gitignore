@@ -8,10 +8,14 @@
 # Do not ignore current project's `.uproject`.
 !/*.uproject
 
+# Do not ignore current project's `.uplugin`.
+!/*.uplugin
+
 # Do not ignore source, config and plugins dirs.
 !/Source/**
 !/Config/**
 !/Plugins/**
+!/Resources/**
 
 # Only allow .uasset and .umap files from /Content dir.
 # They're tracked by git-lfs, don't forget to track other
