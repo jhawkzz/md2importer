@@ -104,9 +104,11 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// 2. When re-importing, it doesn't find an Existing Object, but it does overwrite the asset correctly. Weird.
 			// Only difference I can see from Textures/Materials is that I'm NOT using a factory to create the mesh.
 	
-	// TODO: Warn if the InOut Material/Texture name changes
 	// TODO: UI! It should populate texture slots based on whats found below, and suggest names
 	// based on what is being created below too.
+
+	// todo: fix the position of the nodes created in the graph
+	// todo: offer the option to use a single material with a lerp for textures
 	
 	//TODO: Figure out what to do with the second+ materials
 
