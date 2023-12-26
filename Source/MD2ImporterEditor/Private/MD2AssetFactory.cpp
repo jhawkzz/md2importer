@@ -39,54 +39,6 @@ UMD2AssetFactory::UMD2AssetFactory( )
 	bEditorImport = true;
 }
 
-void UMD2AssetFactory::GetImportOptions( )
-{
-	TSharedPtr<SWindow> ParentWindow;
-
-	if ( FModuleManager::Get( ).IsModuleLoaded( "MainFrame" ) )
-	{
-		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>( "MainFrame" );
-		ParentWindow = MainFrame.GetParentWindow( );
-	}
-
-	// Compute centered window position based on max window size, which include when all categories are expanded
-	const float MD2ImportWindowWidth = 450.0f;
-	const float MD2ImportWindowHeight = 750.0f;
-	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
-
-
-	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
-	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
-	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
-
-	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
-	MD2ImportWindowSize *= ScaleFactor;
-
-	FVector2D WindowPosition = (DisplayTopLeft + (DisplaySize - MD2ImportWindowSize) / 2.0f) / ScaleFactor;
-
-
-	TSharedRef<SWindow> Window = SNew( SWindow )
-		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOpionsTitle", "MD2 Import Options" ) )
-		.SizingRule( ESizingRule::Autosized )
-		.AutoCenter( EAutoCenter::None )
-		.ClientSize( MD2ImportWindowSize )
-		.ScreenPosition( WindowPosition );
-	
-	FString FullPath = TEXT("C:\\");
-	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
-	Window->SetContent
-	(
-		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
-		.WidgetWindow( Window )
-		.FullPath( FText::FromString( FullPath ) )
-		.MaxWindowHeight( MD2ImportWindowHeight )
-		.MaxWindowWidth( MD2ImportWindowWidth )
-	);
-
-	// @todo: we can make this slow as showing progress bar later
-	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
-}
-
 UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	UObject* InParent,
 	FName InName,
@@ -96,20 +48,23 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	FFeedbackContext* Warn,
 	bool& bOutOperationCanceled )
 {
-	//GetImportOptions( );
+	if ( GetImportOptions( ) == false )
+	{
+		bOutOperationCanceled = true;
+		return nullptr;
+	}
 
 	//Importing is done and working, including re-import!
 	//TODO: There are two minor bugs on static mesh: 
 	// 1. I can't seem to rename the created asset. If it doesn't match the filename, Content Drawer won't show it.
 	// 2. When re-importing, it doesn't find an Existing Object, but it does overwrite the asset correctly. Weird.
 			// Only difference I can see from Textures/Materials is that I'm NOT using a factory to create the mesh.
-	
+
 	// TODO: UI! It should populate texture slots based on whats found below, and suggest names
 	// based on what is being created below too.
 
-	// todo: fix the position of the nodes created in the graph
 	// todo: offer the option to use a single material with a lerp for textures
-	
+
 	//TODO: Figure out what to do with the second+ materials
 
 	// start by breaking apart the filename so we can use it to find / name assets
@@ -142,6 +97,56 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 
 	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, MeshAssetName, Materials, CreatedObjects );
 	return StaticMesh;
+}
+
+bool UMD2AssetFactory::GetImportOptions( )
+{
+	TSharedPtr<SWindow> ParentWindow;
+
+	if ( FModuleManager::Get( ).IsModuleLoaded( "MainFrame" ) )
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>( "MainFrame" );
+		ParentWindow = MainFrame.GetParentWindow( );
+	}
+
+	// Compute centered window position based on max window size, which include when all categories are expanded
+	const float MD2ImportWindowWidth = 450.0f;
+	const float MD2ImportWindowHeight = 750.0f;
+	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
+
+
+	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
+	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
+	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
+
+	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
+	MD2ImportWindowSize *= ScaleFactor;
+
+	FVector2D WindowPosition = (DisplayTopLeft + (DisplaySize - MD2ImportWindowSize) / 2.0f) / ScaleFactor;
+
+
+	TSharedRef<SWindow> Window = SNew( SWindow )
+		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOpionsTitle", "MD2 Import Options" ) )
+		.SizingRule( ESizingRule::Autosized )
+		.AutoCenter( EAutoCenter::None )
+		.ClientSize( MD2ImportWindowSize )
+		.ScreenPosition( WindowPosition );
+
+	FString FullPath = TEXT( "C:\\" );
+	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
+	Window->SetContent
+	(
+		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
+		.WidgetWindow( Window )
+		.FullPath( FText::FromString( FullPath ) )
+		.MaxWindowHeight( MD2ImportWindowHeight )
+		.MaxWindowWidth( MD2ImportWindowWidth )
+	);
+
+	// @todo: we can make this slow as showing progress bar later
+	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
+
+	return MD2OptionsWindow->ShouldImport( );
 }
 
 UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,
@@ -288,7 +293,11 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 			UMaterialExpressionTextureSample* TextureExpression = NewObject<UMaterialExpressionTextureSample>( UnrealMaterial );
 			TextureExpression->Texture = InSourceTexture;
 			TextureExpression->SamplerType = SAMPLERTYPE_Color;
-			//TextureExpression->GraphNode->NodePosX = -50; //todo: fix the graph node position in material editor
+
+			// -250 seems to be what most importers use (looking at code examples), and looks nice.
+			// todo: if we need multiple textures, this will need to be updated
+			TextureExpression->MaterialExpressionEditorX = -250;
+
 			UnrealMaterial->GetExpressionCollection( ).AddExpression( TextureExpression );
 			UnrealMaterial->GetEditorOnlyData( )->BaseColor.Expression = TextureExpression;
 		}
@@ -418,6 +427,18 @@ void UMD2AssetFactory::EnumeratePCXFiles( const FString& SearchFileBasePath, TAr
 	// search the immediate folder for any PCX files, so we can offer these as default imports for the artist
 	FFileManagerGeneric FileManager;
 	FileManager.FindFiles( OutPCXFiles, *SearchFileBasePath, TEXT( "pcx" ) );
+}
+
+
+float UMD2AssetFactory::ScaleForDPI( float Value )
+{
+	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
+	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
+	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
+
+	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
+
+	return ScaleFactor * Value;
 }
 
 void UMD2AssetFactory::TestCreateRawMesh( FRawMesh& OutRawMesh )
