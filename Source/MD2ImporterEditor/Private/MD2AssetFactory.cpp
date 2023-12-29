@@ -54,6 +54,8 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		return nullptr;
 	}
 
+	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
+	
 	//Importing is done and working, including re-import!
 	//TODO: There are two minor bugs on static mesh: 
 	// 1. I can't seem to rename the created asset. If it doesn't match the filename, Content Drawer won't show it.
@@ -72,15 +74,25 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	FPaths::Split( Filename, MeshFileBasePath, MeshFileName, MeshExtension );
 	MeshFileName = ObjectTools::SanitizeObjectName( MeshFileName );
 
+	// build the final mesh asset name
+	// TODO: UE 5.3 seems to require imports to maintain the filename of their source file
+	FString MeshAssetName = /*TEXT("SM_") + */MeshFileName;
+
+	TArray<FString> PCXTextureNames;
+	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, MeshAssetName, PCXTextureNames, CreatedObjects );
+
+	// The MD2 spec provides the relative skin path in the model. Since it's unlikely that path still exists,
+	// assume those files will be in a folder or subfolder of the MD2.
+
 	// get all the pcx files in this immediate dir
 	TArray<FString> PCXFiles;
-	EnumeratePCXFiles( MeshFileBasePath, PCXFiles );
+	FindPCXFiles( MeshFileBasePath, PCXTextureNames, PCXFiles );
 
 	// build a list of filename / texture asset name pairings
 	TArray<FMD2SkinImportData> SkinImports;
 	BuildSkinAssetNames( PCXFiles, MeshFileName, SkinImports );
 
-	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
+
 	TArray<TWeakObjectPtr<UMaterial>> Materials;
 	for ( int i = 0; i < SkinImports.Num( ); i++ )
 	{
@@ -91,11 +103,14 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		Materials.Add( Material );
 	}
 
-	// build the final mesh asset name
-	// TODO: UE 5.3 seems to require imports to maintain the filename of their source file
-	FString MeshAssetName = /*TEXT("SM_") + */MeshFileName;
+	// assign materials to the static mesh
+	for ( int i = 0; i < Materials.Num( ); i++ )
+	{
+		StaticMesh->GetStaticMaterials( ).Add( Materials[ i ].Get( ) );
+		StaticMesh->GetSectionInfoMap( ).Set( 0, 0, FMeshSectionInfo( i ) );
+	}
+	StaticMesh->MarkPackageDirty( );
 
-	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, MeshAssetName, Materials, CreatedObjects );
 	return StaticMesh;
 }
 
@@ -315,7 +330,7 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
 	const FString& MD2FullFilename,
 	FString& InOutStaticMeshAssetName,
-	TArray<TWeakObjectPtr<UMaterial>>& DefaultMaterials,
+	TArray<FString>& OutPCXTextureNames,
 	TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
 {
 	// put the mesh in the base package they selected (again, like '/Game')
@@ -368,15 +383,9 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
 			FStaticMeshSourceModel& SourceModel = StaticMesh->GetSourceModel( 0 );
 			FRawMesh RawMesh = FRawMesh( );
 
-			MD2Asset->Convert( RawMesh );
+			MD2Asset->Convert( RawMesh, OutPCXTextureNames );
 
 			SourceModel.RawMeshBulkData->SaveRawMesh( RawMesh );
-
-			for ( int i = 0; i < DefaultMaterials.Num( ); i++ )
-			{
-				StaticMesh->GetStaticMaterials( ).Add( DefaultMaterials[ i ].Get( ) );
-				StaticMesh->GetSectionInfoMap( ).Set( 0, 0, FMeshSectionInfo( i ) );
-			}
 
 			// Model Configuration - todo: expose these to a UI
 			SourceModel.BuildSettings.bRecomputeNormals = true;
@@ -414,7 +423,7 @@ void UMD2AssetFactory::BuildSkinAssetNames( const TArray<FString>& PCXFiles, con
 	{
 		FMD2SkinImportData SkinImportData;
 		SkinImportData.TextureFilename = FPaths::GetBaseFilename( PCXFile, true );
-		SkinImportData.TextureExtension = "pcx"; //todo: parse this
+		SkinImportData.TextureExtension = UMD2Asset::TEXTURE_FORMAT;
 		SkinImportData.TextureAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + ParentMeshName + TEXT( "_" ) + SkinImportData.TextureFilename + TEXT( "_D" ) );
 		SkinImportData.MaterialAssetName = ObjectTools::SanitizeObjectName( TEXT( "M_" ) + ParentMeshName + TEXT( "_" ) + SkinImportData.TextureFilename + TEXT( "_D" ) );
 
@@ -422,13 +431,24 @@ void UMD2AssetFactory::BuildSkinAssetNames( const TArray<FString>& PCXFiles, con
 	}
 }
 
-void UMD2AssetFactory::EnumeratePCXFiles( const FString& SearchFileBasePath, TArray<FString>& OutPCXFiles )
+void UMD2AssetFactory::FindPCXFiles( const FString& SearchFileBasePath, TArray<FString>& InTextureNames, TArray<FString>& OutPCXFiles )
 {
-	// search the immediate folder for any PCX files, so we can offer these as default imports for the artist
-	FFileManagerGeneric FileManager;
-	FileManager.FindFiles( OutPCXFiles, *SearchFileBasePath, TEXT( "pcx" ) );
-}
+	TArray<FString> FoundFiles;
 
+	// search for all files in the format supported by MD2
+	FFileManagerGeneric FileManager;
+	for ( int i = 0; i < InTextureNames.Num(); i++ )
+	{
+		int32 CurrNum = OutPCXFiles.Num( );
+		FileManager.FindFilesRecursive( OutPCXFiles, *SearchFileBasePath, *InTextureNames[i], true, false, false );
+
+		// if Num() didn't increase, the file wasn't there
+		if ( CurrNum == OutPCXFiles.Num( ) )
+		{
+			UE_LOG( LogTemp, Warning, TEXT( "MD2 Import: Could not find texture: %s" ), *InTextureNames[ i ] );
+		}
+	}
+}
 
 float UMD2AssetFactory::ScaleForDPI( float Value )
 {

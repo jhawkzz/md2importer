@@ -185,7 +185,14 @@ bool UMD2Asset::Load( TArray<uint8>* BinaryData )
 	memcpy( &Model.Header, CurrReadPos, sizeof( Model.Header ) );
 
 	// verify version
-	if ( Model.Header.Ident != MODEL_IDENT || Model.Header.Version != MODEL_VERSION ) return false;
+	if ( Model.Header.Ident != MAGIC_NUMBER || Model.Header.Version != MODEL_VERSION ) return false;
+
+	// verify max vals
+	if ( Model.Header.NumTris > MAX_TRIANGLES ) return false;
+	if ( Model.Header.NumVertices > MAX_VERTICES ) return false;
+	if ( Model.Header.NumSt > MAX_TEXTURE_COORDS ) return false;
+	if ( Model.Header.NumFrames > MAX_FRAMES ) return false;
+	if ( Model.Header.NumSkins > MAX_SKINS ) return false;
 
 	// allocate memory
 	Model.Skins = new FMD2Skin[ Model.Header.NumSkins ]; //skins
@@ -243,17 +250,6 @@ void UMD2Asset::UnLoad( void )
 		delete[] Model.Frames[ i ].Verts;
 	}
 
-	// remove the skins
-	if ( SkinData.PTex != nullptr )
-	{
-		for ( i = 0; i < (uint32)Model.Header.NumSkins; i++ )
-		{
-			delete[] SkinData.PTex[ i ];
-		}
-
-		delete[] SkinData.PTex;
-	}
-
 	// cleanup the rest
 	if ( Model.Glcmds != nullptr )
 	{
@@ -283,7 +279,7 @@ void UMD2Asset::UnLoad( void )
 	memset( &Model, 0, sizeof( Model ) );
 }
 
-void UMD2Asset::Convert( FRawMesh& OutRawMesh )
+void UMD2Asset::Convert( FRawMesh& OutRawMesh, TArray<FString>& OutPCXTextureNames )
 {
 	FVector3f EmptyVector = FVector3f( 0, 0, 0 );
 	FColor WhiteVertex = FColor( 255, 255, 255, 255 );
@@ -374,5 +370,23 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert0UV );
 		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert1UV );
 		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert2UV );
+	}
+
+	// copy over the textures this md2 model wants to use
+	for ( int i = 0; i < Model.Header.NumSkins; i++ )
+	{
+		FString SkinName( Model.Skins[ i ].Name );
+
+		// Our UE importer doesn't care about the legacy paths, so take only the
+		// filename.
+		int32 FileNameIndex = 0;
+		bool bResult = SkinName.FindLastChar( '/', FileNameIndex );
+
+		if ( bResult == true )
+		{
+			SkinName = SkinName.RightChop( FileNameIndex + 1 );
+		}
+
+		OutPCXTextureNames.Add( SkinName );
 	}
 }

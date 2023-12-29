@@ -2,6 +2,7 @@
 
 
 #include "MD2OptionsWindow.h"
+#include "MD2Asset.h"
 #include "IDocumentation.h"
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
@@ -121,7 +122,7 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 				.VAlign( VAlign_Center )
 				.AutoWidth( )
 				[
-					IDocumentation::Get( )->CreateAnchor( FString( "Engine/Content/MD2/ImportOptions" ) )
+					IDocumentation::Get( )->CreateAnchor( UMD2Asset::REFERENCE_URL )
 				]
 				+ SHorizontalBox::Slot( )
 				.HAlign( HAlign_Right )

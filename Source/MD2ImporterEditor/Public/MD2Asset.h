@@ -6,16 +6,6 @@
 #include "UObject/NoExportTypes.h"
 #include "MD2Asset.generated.h"
 
-#define MAX_MD2_TRIANGLES (4096)
-#define MAX_MD2_VERTICES  (2048)
-#define MAX_MD2_TEX_COORD (2048)
-#define MAX_MD2_FRAMES     (512)
-#define MAX_MD2_SKINS       (32)
-
-#define MODEL_IDENT      (844121161)
-#define MODEL_VERSION    (8)
-#define PRECAL_NORM 162
-
 // This loads the Quake II model format.
 // This information taken from the glorious site: http://tfc.duke.free.fr/coding/md2-specs-en.html
 struct FMD2Header
@@ -84,12 +74,6 @@ struct FMD2Frame
 
 };
 
-struct FMD2SkinData
-{
-	int16** PTex{ nullptr };
-	int32   TexSize;
-};
-
 /* md2 model structure */
 struct  FMD2Model
 {
@@ -117,14 +101,24 @@ public:
 	bool Load( TArray<uint8>* BinaryData );
 	void UnLoad( void );
 
-	void Convert( struct FRawMesh& OutRawMesh );
+	void Convert( struct FRawMesh& OutRawMesh, TArray<FString>& OutPCXTextureNames );
+
+public:
+	static inline const FString REFERENCE_URL { "http://tfc.duke.free.fr/coding/md2-specs-en.html" };
+	static inline const FString TEXTURE_FORMAT { "pcx" };
+
+	static const uint32 MAGIC_NUMBER = 844121161;
+	static const uint32 MODEL_VERSION = 8;
+
+	static const uint32 MAX_TRIANGLES = 4096;
+	static const uint32 MAX_VERTICES = 2048;
+	static const uint32 MAX_TEXTURE_COORDS = 2048;
+	static const uint32 MAX_FRAMES = 512;
+	static const uint32 MAX_SKINS = 32;
 
 private:
+	static const uint32 PRECAL_NORM = 162;
 
-	FMD2Model    Model;
-	FMD2SkinData SkinData;
-
-private:
+	FMD2Model Model;
 	static const float NormalLookup[ PRECAL_NORM ][ 3 ];
-
 };
