@@ -98,10 +98,12 @@ public:
 	UMD2Asset( );
 	~UMD2Asset( );
 
-	bool Load( TArray<uint8>* BinaryData );
-	void UnLoad( void );
+	bool Load( const FString& MD2Filename );
+	void GetPCXTextureList( TArray<FString>& OutPCXTextureNames );
+	void Convert( struct FRawMesh& OutRawMesh );
 
-	void Convert( struct FRawMesh& OutRawMesh, TArray<FString>& OutPCXTextureNames );
+private:
+	void UnLoad( void );
 
 public:
 	static inline const FString REFERENCE_URL { "http://tfc.duke.free.fr/coding/md2-specs-en.html" };
@@ -118,7 +120,9 @@ public:
 
 private:
 	static const uint32 PRECAL_NORM = 162;
+	static const float NormalLookup[ PRECAL_NORM ][ 3 ];
 
 	FMD2Model Model;
-	static const float NormalLookup[ PRECAL_NORM ][ 3 ];
+	FString Filename;
+	TArray<uint8> BinaryData;
 };

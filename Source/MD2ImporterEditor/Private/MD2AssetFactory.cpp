@@ -48,13 +48,15 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	FFeedbackContext* Warn,
 	bool& bOutOperationCanceled )
 {
-	if ( GetImportOptions( ) == false )
+	// try to get the full path, but if the inparent is somehow null, at least show the 
+	// asset name.
+	if ( InParent == nullptr )
 	{
+		UE_LOG( LogTemp, Warning, TEXT( "InParent is null. Can't import %s" ), *Filename );
+
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
-
-	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
 	
 	//Importing is done and working, including re-import!
 	//TODO: There are two minor bugs on static mesh: 
@@ -78,13 +80,34 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// TODO: UE 5.3 seems to require imports to maintain the filename of their source file
 	FString MeshAssetName = /*TEXT("SM_") + */MeshFileName;
 
+	UMD2Asset* MD2Asset = NewObject<UMD2Asset>( );
+	bool bResult = MD2Asset->Load( Filename );
+	if ( bResult == false )
+	{
+		//todo: Show a message box?
+		UE_LOG( LogTemp, Warning, TEXT( "Failed to load MD2 Asset %s" ), *Filename );
+		return nullptr;
+	}
+
 	TArray<FString> PCXTextureNames;
-	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, Filename, MeshAssetName, PCXTextureNames, CreatedObjects );
+	MD2Asset->GetPCXTextureList( PCXTextureNames );
+
+	//todo: We now have what we need to show the import dialog!
+	// we have a valid md2 model, and we have the texture list!!
+	if ( GetImportOptions( InParent->GetPathName( ) ) == false )
+	{
+		bOutOperationCanceled = true;
+		return nullptr;
+	}
+
+	TArray<TWeakObjectPtr<UObject>> CreatedObjects;
+
+	UStaticMesh* StaticMesh = ImportMD2Asset( InParent, MD2Asset, Filename, MeshAssetName, CreatedObjects );
 
 	// The MD2 spec provides the relative skin path in the model. Since it's unlikely that path still exists,
 	// assume those files will be in a folder or subfolder of the MD2.
 
-	// get all the pcx files in this immediate dir
+	// todo: This will instead iterate over whatever was provided from md2options
 	TArray<FString> PCXFiles;
 	FindPCXFiles( MeshFileBasePath, PCXTextureNames, PCXFiles );
 
@@ -114,7 +137,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	return StaticMesh;
 }
 
-bool UMD2AssetFactory::GetImportOptions( )
+bool UMD2AssetFactory::GetImportOptions( const FString& FullPath )
 {
 	TSharedPtr<SWindow> ParentWindow;
 
@@ -147,7 +170,6 @@ bool UMD2AssetFactory::GetImportOptions( )
 		.ClientSize( MD2ImportWindowSize )
 		.ScreenPosition( WindowPosition );
 
-	FString FullPath = TEXT( "C:\\" );
 	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
 	Window->SetContent
 	(
@@ -328,9 +350,9 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 }
 
 UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
+	UMD2Asset* MD2Asset,
 	const FString& MD2FullFilename,
 	FString& InOutStaticMeshAssetName,
-	TArray<FString>& OutPCXTextureNames,
 	TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
 {
 	// put the mesh in the base package they selected (again, like '/Game')
@@ -364,54 +386,42 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
 		MeshPackage = ExistingMesh->GetOutermost( );
 	}
 
-	TArray<uint8> BinaryData;
-	FFileHelper::LoadFileToArray( BinaryData, *MD2FullFilename, 0 );
-
-	UStaticMesh* StaticMesh = nullptr;
-	if ( BinaryData.Num( ) > 0 )
+	const bool bAssetAlreadyExists = FindObject<UStaticMesh>( MeshPackage, *InOutStaticMeshAssetName ) != nullptr;
+	UStaticMesh* StaticMesh = NewObject<UStaticMesh>( InParent, UStaticMesh::StaticClass( ), *InOutStaticMeshAssetName, RF_Public | RF_Standalone );
+	if ( StaticMesh != nullptr )
 	{
-		UMD2Asset* MD2Asset = NewObject<UMD2Asset>( );
-		MD2Asset->Load( &BinaryData );
+		StaticMesh->AddSourceModel( );
+		FStaticMeshSourceModel& SourceModel = StaticMesh->GetSourceModel( 0 );
+		FRawMesh RawMesh = FRawMesh( );
 
-		const bool bAssetAlreadyExists = FindObject<UStaticMesh>( MeshPackage, *InOutStaticMeshAssetName ) != nullptr;
+		MD2Asset->Convert( RawMesh );
 
-		StaticMesh = NewObject<UStaticMesh>( InParent, UStaticMesh::StaticClass( ), *InOutStaticMeshAssetName, RF_Public | RF_Standalone );
+		SourceModel.RawMeshBulkData->SaveRawMesh( RawMesh );
 
-		if ( StaticMesh != nullptr )
+		// Model Configuration - todo: expose these to a UI
+		SourceModel.BuildSettings.bRecomputeNormals = true;
+		SourceModel.BuildSettings.bRecomputeTangents = true;
+		SourceModel.BuildSettings.bUseMikkTSpace = false;
+		SourceModel.BuildSettings.bGenerateLightmapUVs = true;
+		SourceModel.BuildSettings.bRemoveDegenerates = true;
+		SourceModel.BuildSettings.bBuildReversedIndexBuffer = false;
+		SourceModel.BuildSettings.bUseFullPrecisionUVs = false;
+		SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
+		StaticMesh->Build( );
+
+		// Make sure the AssetImportData points to the mesh file
+		StaticMesh->AssetImportData->Update( IFileManager::Get( ).ConvertToAbsolutePathForExternalAppForRead( *MD2FullFilename ) );
+
+		if ( bAssetAlreadyExists == false )
 		{
-			StaticMesh->AddSourceModel( );
-			FStaticMeshSourceModel& SourceModel = StaticMesh->GetSourceModel( 0 );
-			FRawMesh RawMesh = FRawMesh( );
-
-			MD2Asset->Convert( RawMesh, OutPCXTextureNames );
-
-			SourceModel.RawMeshBulkData->SaveRawMesh( RawMesh );
-
-			// Model Configuration - todo: expose these to a UI
-			SourceModel.BuildSettings.bRecomputeNormals = true;
-			SourceModel.BuildSettings.bRecomputeTangents = true;
-			SourceModel.BuildSettings.bUseMikkTSpace = false;
-			SourceModel.BuildSettings.bGenerateLightmapUVs = true;
-			SourceModel.BuildSettings.bRemoveDegenerates = true;
-			SourceModel.BuildSettings.bBuildReversedIndexBuffer = false;
-			SourceModel.BuildSettings.bUseFullPrecisionUVs = false;
-			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
-			StaticMesh->Build( );
-
-			// Make sure the AssetImportData points to the mesh file
-			StaticMesh->AssetImportData->Update( IFileManager::Get( ).ConvertToAbsolutePathForExternalAppForRead( *MD2FullFilename ) );
-
-			if ( bAssetAlreadyExists == false )
-			{
-				OutCreatedObjects.Add( StaticMesh );
-			}
-
-			// Notify the asset registry
-			FAssetRegistryModule::AssetCreated( StaticMesh );
-
-			// flag dirty so it saves later
-			MeshPackage->SetDirtyFlag( true );
+			OutCreatedObjects.Add( StaticMesh );
 		}
+
+		// Notify the asset registry
+		FAssetRegistryModule::AssetCreated( StaticMesh );
+
+		// flag dirty so it saves later
+		MeshPackage->SetDirtyFlag( true );
 	}
 
 	return StaticMesh;

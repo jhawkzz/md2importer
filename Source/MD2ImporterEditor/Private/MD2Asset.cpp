@@ -177,9 +177,18 @@ UMD2Asset::~UMD2Asset( )
 	UnLoad( );
 }
 
-bool UMD2Asset::Load( TArray<uint8>* BinaryData )
+bool UMD2Asset::Load( const FString& MD2Filename )
 {
-	uint8* CurrReadPos = BinaryData->GetData( );
+	if ( Filename.Len() > 0 )
+	{
+		UE_LOG( LogTemp, Warning, TEXT("UMD2Asset already loaded.") );
+		return false;
+	}
+
+	Filename = MD2Filename;
+
+	FFileHelper::LoadFileToArray( BinaryData, *Filename, 0 );
+	uint8* CurrReadPos = BinaryData.GetData( );
 
 	// read the header
 	memcpy( &Model.Header, CurrReadPos, sizeof( Model.Header ) );
@@ -202,20 +211,20 @@ bool UMD2Asset::Load( TArray<uint8>* BinaryData )
 	Model.Glcmds = new int[ Model.Header.NumGlcmds ]; //opengl commands
 
 	// read model data
-	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetSkins;
+	CurrReadPos = BinaryData.GetData( ) + Model.Header.OffsetSkins;
 	memcpy( Model.Skins, CurrReadPos, Model.Header.NumSkins * sizeof( FMD2Skin ) );
 
-	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetSt;
+	CurrReadPos = BinaryData.GetData( ) + Model.Header.OffsetSt;
 	memcpy( Model.Texcoords, CurrReadPos, Model.Header.NumSt * sizeof( FMD2TexCoord ) );
 
-	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetTris;
+	CurrReadPos = BinaryData.GetData( ) + Model.Header.OffsetTris;
 	memcpy( Model.Triangles, CurrReadPos, Model.Header.NumTris * sizeof( FMD2Triangle ) );
 
-	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetGlcmds;
+	CurrReadPos = BinaryData.GetData( ) + Model.Header.OffsetGlcmds;
 	memcpy( Model.Glcmds, CurrReadPos, Model.Header.NumGlcmds * sizeof( int32 ) );
 
 	// read frames
-	CurrReadPos = BinaryData->GetData( ) + Model.Header.OffsetFrames;
+	CurrReadPos = BinaryData.GetData( ) + Model.Header.OffsetFrames;
 
 	uint32 i;
 	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
@@ -240,46 +249,28 @@ bool UMD2Asset::Load( TArray<uint8>* BinaryData )
 	return true;
 }
 
-void UMD2Asset::UnLoad( void )
+void UMD2Asset::GetPCXTextureList( TArray<FString>& OutPCXTextureNames )
 {
-	uint32 i;
-
-	//remove verts 
-	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
+	// copy over the textures this md2 model wants to use
+	for ( int i = 0; i < Model.Header.NumSkins; i++ )
 	{
-		delete[] Model.Frames[ i ].Verts;
-	}
+		FString SkinName( Model.Skins[ i ].Name );
 
-	// cleanup the rest
-	if ( Model.Glcmds != nullptr )
-	{
-		delete[] Model.Glcmds;
-	}
+		// Our UE importer doesn't care about the legacy paths, so take only the
+		// filename.
+		int32 FileNameIndex = 0;
+		bool bResult = SkinName.FindLastChar( '/', FileNameIndex );
 
-	if ( Model.Frames != nullptr )
-	{
-		delete[] Model.Frames;
-	}
+		if ( bResult == true )
+		{
+			SkinName = SkinName.RightChop( FileNameIndex + 1 );
+		}
 
-	if ( Model.Triangles != nullptr )
-	{
-		delete[] Model.Triangles;
+		OutPCXTextureNames.Add( SkinName );
 	}
-
-	if ( Model.Texcoords != nullptr )
-	{
-		delete[] Model.Texcoords;
-	}
-
-	if ( Model.Skins != nullptr )
-	{
-		delete[] Model.Skins;
-	}
-
-	memset( &Model, 0, sizeof( Model ) );
 }
 
-void UMD2Asset::Convert( FRawMesh& OutRawMesh, TArray<FString>& OutPCXTextureNames )
+void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 {
 	FVector3f EmptyVector = FVector3f( 0, 0, 0 );
 	FColor WhiteVertex = FColor( 255, 255, 255, 255 );
@@ -371,22 +362,43 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh, TArray<FString>& OutPCXTextureNam
 		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert1UV );
 		OutRawMesh.WedgeTexCoords[ 0 ].Add( Vert2UV );
 	}
+}
 
-	// copy over the textures this md2 model wants to use
-	for ( int i = 0; i < Model.Header.NumSkins; i++ )
+void UMD2Asset::UnLoad( void )
+{
+	uint32 i;
+
+	//remove verts 
+	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
 	{
-		FString SkinName( Model.Skins[ i ].Name );
-
-		// Our UE importer doesn't care about the legacy paths, so take only the
-		// filename.
-		int32 FileNameIndex = 0;
-		bool bResult = SkinName.FindLastChar( '/', FileNameIndex );
-
-		if ( bResult == true )
-		{
-			SkinName = SkinName.RightChop( FileNameIndex + 1 );
-		}
-
-		OutPCXTextureNames.Add( SkinName );
+		delete[ ] Model.Frames[ i ].Verts;
 	}
+
+	// cleanup the rest
+	if ( Model.Glcmds != nullptr )
+	{
+		delete[ ] Model.Glcmds;
+	}
+
+	if ( Model.Frames != nullptr )
+	{
+		delete[ ] Model.Frames;
+	}
+
+	if ( Model.Triangles != nullptr )
+	{
+		delete[ ] Model.Triangles;
+	}
+
+	if ( Model.Texcoords != nullptr )
+	{
+		delete[ ] Model.Texcoords;
+	}
+
+	if ( Model.Skins != nullptr )
+	{
+		delete[ ] Model.Skins;
+	}
+
+	memset( &Model, 0, sizeof( Model ) );
 }

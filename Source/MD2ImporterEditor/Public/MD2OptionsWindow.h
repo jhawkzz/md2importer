@@ -41,16 +41,9 @@ public:
 		return FReply::Handled( );
 	}
 
-	FReply OnImportAll( )
-	{
-		bShouldImportAll = true;
-		return OnImport( );
-	}
-
 	FReply OnCancel( )
 	{
 		bShouldImport = false;
-		bShouldImportAll = false;
 		if ( WidgetWindow.IsValid( ) )
 		{
 			WidgetWindow.Pin( )->RequestDestroyWindow( );
@@ -73,14 +66,8 @@ public:
 		return bShouldImport;
 	}
 
-	bool ShouldImportAll( ) const
-	{
-		return bShouldImportAll;
-	}
-
 	SMD2OptionsWindow( )
 		: bShouldImport( false )
-		, bShouldImportAll( false )
 	{}
 
 private:
@@ -93,6 +80,5 @@ private:
 	TSharedPtr<class IDetailsView> DetailsView;
 	TWeakPtr< SWindow > WidgetWindow;
 	TSharedPtr<SButton> ImportAllButton;
-	bool			bShouldImport;
-	bool			bShouldImportAll;
+	bool				bShouldImport;
 };

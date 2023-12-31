@@ -72,20 +72,12 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 								+ SUniformGridPanel::Slot( 1, 0 )
 								[
 									SAssignNew( ImportAllButton, SPrimaryButton )
-										.Text( LOCTEXT( "MD2OptionWindow_ImportAll", "Import All" ) )
-										.ToolTipText( LOCTEXT( "MD2OptionWindow_ImportAll_ToolTip", "Import all files with these same settings" ) )
-										.IsEnabled( this, &SMD2OptionsWindow::CanImport )
-										.OnClicked( this, &SMD2OptionsWindow::OnImportAll )
-								]
-								+ SUniformGridPanel::Slot( 2, 0 )
-								[
-									SNew( SButton )
-										.HAlign( HAlign_Center )
 										.Text( LOCTEXT( "MD2OptionWindow_Import", "Import" ) )
+										.ToolTipText( LOCTEXT( "MD2OptionWindow_Import_ToolTip", "Import MD2 file and selected textures" ) )
 										.IsEnabled( this, &SMD2OptionsWindow::CanImport )
 										.OnClicked( this, &SMD2OptionsWindow::OnImport )
 								]
-								+ SUniformGridPanel::Slot( 3, 0 )
+								+ SUniformGridPanel::Slot( 2, 0 )
 								[
 									SNew( SButton )
 										.HAlign( HAlign_Center )
