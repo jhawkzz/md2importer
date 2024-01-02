@@ -62,14 +62,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	//TODO: There are two minor bugs on static mesh: 
 	// 1. I can't seem to rename the created asset. If it doesn't match the filename, Content Drawer won't show it.
 	// 2. When re-importing, it doesn't find an Existing Object, but it does overwrite the asset correctly. Weird.
-			// Only difference I can see from Textures/Materials is that I'm NOT using a factory to create the mesh.
-
-	// TODO: UI! It should populate texture slots based on whats found below, and suggest names
-	// based on what is being created below too.
-
-	// todo: offer the option to use a single material with a lerp for textures
-
-	//TODO: Figure out what to do with the second+ materials
+			// Only difference I can see from Textures/Mat
 
 	// start by breaking apart the filename so we can use it to find / name assets
 	FString MeshFileBasePath, MeshFileName, MeshExtension;
@@ -92,9 +85,15 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	TArray<FString> PCXTextureNames;
 	MD2Asset->GetPCXTextureList( PCXTextureNames );
 
-	//todo: We now have what we need to show the import dialog!
-	// we have a valid md2 model, and we have the texture list!!
-	if ( GetImportOptions( InParent->GetPathName( ) ) == false )
+	//TODO: Now that we have MD2TextureImportWidget working
+	// - get the browse button working, and the texture asset name field editable
+	// - get the remove button working
+	// - importOptions (below) will then have a validated file path for each texture,
+	// - so we wont need FindPCX files - instead, we can just pass the data into BuildSkinAssetNames
+	//		so it can copy the stuff over into the MD2SkinIMportData struct
+	// BIGGEST UNKNOWN NOW - How will i have a UI that lets them merge textures into a single material?
+	const MD2ImportOptions* ImportOptions = GetImportOptions( InParent->GetPathName( ), PCXTextureNames );
+	if ( ImportOptions == nullptr )
 	{
 		bOutOperationCanceled = true;
 		return nullptr;
@@ -137,7 +136,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	return StaticMesh;
 }
 
-bool UMD2AssetFactory::GetImportOptions( const FString& FullPath )
+const MD2ImportOptions* UMD2AssetFactory::GetImportOptions( const FString& FullPath, TArray<FString>& TextureNames )
 {
 	TSharedPtr<SWindow> ParentWindow;
 
@@ -164,7 +163,7 @@ bool UMD2AssetFactory::GetImportOptions( const FString& FullPath )
 
 
 	TSharedRef<SWindow> Window = SNew( SWindow )
-		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOpionsTitle", "MD2 Import Options" ) )
+		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOptionsTitle", "MD2 Import Options" ) )
 		.SizingRule( ESizingRule::Autosized )
 		.AutoCenter( EAutoCenter::None )
 		.ClientSize( MD2ImportWindowSize )
@@ -174,16 +173,25 @@ bool UMD2AssetFactory::GetImportOptions( const FString& FullPath )
 	Window->SetContent
 	(
 		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
-		.WidgetWindow( Window )
-		.FullPath( FText::FromString( FullPath ) )
-		.MaxWindowHeight( MD2ImportWindowHeight )
-		.MaxWindowWidth( MD2ImportWindowWidth )
+			.WidgetWindow( Window )
+			.TextureList( TextureNames )
+			.FullPath( FText::FromString( FullPath ) )
+			.MaxWindowHeight( MD2ImportWindowHeight )
+			.MaxWindowWidth( MD2ImportWindowWidth )
 	);
 
 	// @todo: we can make this slow as showing progress bar later
 	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
 
-	return MD2OptionsWindow->ShouldImport( );
+	// if everything went ok, return actual options. Otherwise, return nullptr, implying we shouldn't import
+	if ( MD2OptionsWindow->ShouldImport( ) )
+	{
+		return MD2OptionsWindow->GetImportOptions( );
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,

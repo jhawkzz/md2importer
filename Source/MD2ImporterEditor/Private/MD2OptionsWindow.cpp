@@ -6,12 +6,14 @@
 #include "IDocumentation.h"
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
+#include "SMD2TextureImportWidget.h"
 
 #define LOCTEXT_NAMESPACE "MD2Option"
 
 void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 {
 	WidgetWindow = InArgs._WidgetWindow;
+	TextureList = InArgs._TextureList;
 
 	TSharedPtr<SBox> ImportTypeDisplay;
 	TSharedPtr<SHorizontalBox> MD2HeaderButtons;
@@ -62,6 +64,12 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 							SAssignNew( InspectorBox, SBox )
 								.MaxDesiredHeight( 650.0f )
 								.WidthOverride( 400.0f )
+						]
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f )
+						[
+							SAssignNew( TextureListBox, SVerticalBox )
 						]
 						+ SVerticalBox::Slot( )
 						.AutoHeight( )
@@ -134,9 +142,28 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 
 	//DetailsView->SetObject( ImportUI );
 
+	RebuildTextureListFromData( TextureList );
+
 	RegisterActiveTimer( 0.f, FWidgetActiveTimerDelegate::CreateSP( this, &SMD2OptionsWindow::SetFocusPostConstruct ) );
 
 }
+
+void SMD2OptionsWindow::RebuildTextureListFromData( TArray<FString>& InTextureList )
+{
+	TextureList = InTextureList;
+
+	TextureListBox->ClearChildren( );
+
+	for ( int32 i = 0; i < TextureList.Num(); i++ )
+	{
+		TextureListBox->AddSlot( )
+			[
+				SNew( SMD2TextureImportWidget )
+					.TextureName( TextureList[ i ] )
+			];
+	}
+}
+
 EActiveTimerReturnType SMD2OptionsWindow::SetFocusPostConstruct( double InCurrentTime, float InDeltaTime )
 {
 	if ( ImportAllButton.IsValid( ) )
@@ -147,6 +174,7 @@ EActiveTimerReturnType SMD2OptionsWindow::SetFocusPostConstruct( double InCurren
 	return EActiveTimerReturnType::Stop;
 
 }
+
 bool SMD2OptionsWindow::CanImport( )  const
 {/*
 	// do test to see if we are ready to import
@@ -187,5 +215,19 @@ FText SMD2OptionsWindow::GetImportTypeDisplayText( ) const
 		return ImportUI->bIsReimport ? LOCTEXT( "FbxOptionWindow_ReImportTypeSM", "Reimport Static Mesh" ) : LOCTEXT( "FbxOptionWindow_ImportTypeSM", "Import Static Mesh" );
 	}*/
 	return FText::GetEmpty( );
+}
+
+FReply SMD2OptionsWindow::OnImport( )
+{
+	bShouldImport = true;
+	if ( WidgetWindow.IsValid( ) )
+	{
+		WidgetWindow.Pin( )->RequestDestroyWindow( );
+	}
+
+	// parse the UI to build the options the user selected
+
+
+	return FReply::Handled( );
 }
 #undef LOCTEXT_NAMESPACE

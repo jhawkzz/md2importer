@@ -6,6 +6,7 @@
 #include "Factories/Factory.h"
 #include "MD2AssetFactory.generated.h"
 
+struct MD2ImportOptions;
 /**
  *
  */
@@ -31,7 +32,7 @@ private:
 	UMaterial* CreateMaterial( UObject* InParent, UTexture* InSourceTexture, FString& InOutMaterialAssetName, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
 	UStaticMesh* ImportMD2Asset( UObject* InParent, UMD2Asset* MD2Asset, const FString& MD2FullFilename, FString& InOutStaticMeshAssetName, TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects );
 
-	bool GetImportOptions( const FString& FullPath );
+	const MD2ImportOptions* GetImportOptions( const FString& FullPath, TArray<FString>& TextureNames );
 	void FindPCXFiles( const FString& SearchFileBasePath, TArray<FString>& InTextureNames, TArray<FString>& OutPCXFiles );
 	void BuildSkinAssetNames( const TArray<FString>& PCXFiles, const FString& ParentMeshName, TArray<struct FMD2SkinImportData>& OutSkinImports );
 	float ScaleForDPI(float Value);
