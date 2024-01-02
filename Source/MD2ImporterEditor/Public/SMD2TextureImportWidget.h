@@ -17,10 +17,12 @@ public:
 	SLATE_BEGIN_ARGS( SMD2TextureImportWidget )
 		: _WidgetWindow( )
 		, _TextureName( )
+		, _DefaultBrowseFilepath( )
 		{}
 
 		SLATE_ARGUMENT( TSharedPtr<SWindow>, WidgetWindow )
 		SLATE_ARGUMENT( FString, TextureName )
+		SLATE_ARGUMENT( FString, DefaultBrowseFilepath )
 	SLATE_END_ARGS( )
 
 public:
@@ -38,4 +40,5 @@ private:
 	TWeakPtr<SWindow> WidgetWindow;
 	FString TextureFilename;
 	FString TextureAssetName;
+	FString DefaultBrowseFilepath;
 };

@@ -32,7 +32,7 @@ public:
 		{}
 
 		SLATE_ARGUMENT( TSharedPtr<SWindow>, WidgetWindow )
-		SLATE_ARGUMENT( FText, FullPath )
+		SLATE_ARGUMENT( FString, FullPath )
 		SLATE_ARGUMENT( float, MaxWindowHeight )
 		SLATE_ARGUMENT( float, MaxWindowWidth )
 		SLATE_ARGUMENT( TArray<FString>, TextureList )
@@ -91,6 +91,7 @@ private:
 	TSharedPtr<SButton> ImportAllButton;
 	TSharedPtr<SVerticalBox> TextureListBox;
 	TArray<FString>		TextureList;
+	FString				MD2Fullpath;
 	bool				bShouldImport;
 	MD2ImportOptions    ImportOptions;
 };

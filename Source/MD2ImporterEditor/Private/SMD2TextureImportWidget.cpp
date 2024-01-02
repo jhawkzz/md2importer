@@ -6,6 +6,7 @@
 #include "IDocumentation.h"
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
+#include "DesktopPlatformModule.h"
 
 #define LOCTEXT_NAMESPACE "MD2TextureImportWidget"
 
@@ -14,7 +15,11 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 	WidgetWindow = InArgs._WidgetWindow;
 	TextureFilename = InArgs._TextureName;
 	TextureAssetName = InArgs._TextureName;
+	DefaultBrowseFilepath = InArgs._DefaultBrowseFilepath;
+	
 	//todo: validate its existence, and setup state based on that
+	// use defaultBrowseFilepath + TetureFIlename and look recursively from there.
+
 
 	this->ChildSlot
 		[
@@ -72,6 +77,26 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 
 FReply SMD2TextureImportWidget::OnBrowse( )
 {
+	TArray<FString> OpenFilenames;
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get( );
+	bool bOpened = false;
+
+	const FString FileTypes = TEXT( "MD2 Skin Texture (*.pcx)|*.pcx" );
+	if ( DesktopPlatform )
+	{
+		bOpened = DesktopPlatform->OpenFileDialog(
+			FSlateApplication::Get( ).FindBestParentWindowHandleForDialogs( nullptr ),
+			LOCTEXT( "SMD2TextureImportWidget_PCXTexture", "Load PCX Texture" ).ToString( ),
+			DefaultBrowseFilepath,
+			TEXT( "" ),
+			FileTypes,
+			EFileDialogFlags::None,
+			OpenFilenames
+		);
+
+		// todo: update filename
+	}
+
 	return FReply::Handled( );
 }
 

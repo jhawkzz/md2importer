@@ -175,7 +175,7 @@ const MD2ImportOptions* UMD2AssetFactory::GetImportOptions( const FString& FullP
 		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
 			.WidgetWindow( Window )
 			.TextureList( TextureNames )
-			.FullPath( FText::FromString( FullPath ) )
+			.FullPath( FullPath )
 			.MaxWindowHeight( MD2ImportWindowHeight )
 			.MaxWindowWidth( MD2ImportWindowWidth )
 	);

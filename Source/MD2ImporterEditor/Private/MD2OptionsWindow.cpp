@@ -14,6 +14,7 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 {
 	WidgetWindow = InArgs._WidgetWindow;
 	TextureList = InArgs._TextureList;
+	MD2Fullpath = InArgs._FullPath;
 
 	TSharedPtr<SBox> ImportTypeDisplay;
 	TSharedPtr<SHorizontalBox> MD2HeaderButtons;
@@ -52,8 +53,8 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 										.VAlign( VAlign_Center )
 										[
 											SNew( STextBlock )
-												.Text( InArgs._FullPath )
-												.ToolTipText( InArgs._FullPath )
+												.Text( FText::FromString( MD2Fullpath ) )
+												.ToolTipText( FText::FromString( MD2Fullpath ) )
 										]
 								]
 						]
@@ -160,6 +161,7 @@ void SMD2OptionsWindow::RebuildTextureListFromData( TArray<FString>& InTextureLi
 			[
 				SNew( SMD2TextureImportWidget )
 					.TextureName( TextureList[ i ] )
+					.DefaultBrowseFilepath( FPaths::GetPath( MD2Fullpath ) )
 			];
 	}
 }
