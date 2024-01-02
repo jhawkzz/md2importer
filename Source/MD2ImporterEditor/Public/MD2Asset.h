@@ -106,8 +106,8 @@ private:
 	void UnLoad( void );
 
 public:
-	static inline const FString REFERENCE_URL { "http://tfc.duke.free.fr/coding/md2-specs-en.html" };
-	static inline const FString TEXTURE_FORMAT { "pcx" };
+	static inline const FString REFERENCE_URL{ "http://tfc.duke.free.fr/coding/md2-specs-en.html" };
+	static inline const FString TEXTURE_FORMAT{ "pcx" };
 
 	static const uint32 MAGIC_NUMBER = 844121161;
 	static const uint32 MODEL_VERSION = 8;

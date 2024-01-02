@@ -7,6 +7,8 @@
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
 #include "SMD2TextureImportWidget.h"
+#include "ObjectTools.h"
+#include "Templates/SharedPointer.h"
 
 #define LOCTEXT_NAMESPACE "MD2Option"
 
@@ -14,7 +16,9 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 {
 	WidgetWindow = InArgs._WidgetWindow;
 	TextureList = InArgs._TextureList;
-	MD2Fullpath = InArgs._FullPath;
+	MD2AssetPath = InArgs._MD2AssetPath;
+	MD2FullFilepath = InArgs._MD2FullFilepath;
+	ImportOptions = InArgs._ImportOptions;
 
 	TSharedPtr<SBox> ImportTypeDisplay;
 	TSharedPtr<SHorizontalBox> MD2HeaderButtons;
@@ -53,8 +57,8 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 										.VAlign( VAlign_Center )
 										[
 											SNew( STextBlock )
-												.Text( FText::FromString( MD2Fullpath ) )
-												.ToolTipText( FText::FromString( MD2Fullpath ) )
+												.Text( FText::FromString( MD2AssetPath ) )
+												.ToolTipText( FText::FromString( MD2AssetPath ) )
 										]
 								]
 						]
@@ -155,13 +159,19 @@ void SMD2OptionsWindow::RebuildTextureListFromData( TArray<FString>& InTextureLi
 
 	TextureListBox->ClearChildren( );
 
-	for ( int32 i = 0; i < TextureList.Num(); i++ )
+	FString MD2Filename = FPaths::GetBaseFilename( MD2FullFilepath, true );
+
+	for ( int32 i = 0; i < TextureList.Num( ); i++ )
 	{
+		// setup a default asset name to help the artist
+		FString DefaultAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + MD2Filename + TEXT( "_" ) + TextureList[ i ] + TEXT( "_D" ) );
+
 		TextureListBox->AddSlot( )
 			[
 				SNew( SMD2TextureImportWidget )
 					.TextureName( TextureList[ i ] )
-					.DefaultBrowseFilepath( FPaths::GetPath( MD2Fullpath ) )
+					.DefaultBrowseFilepath( FPaths::GetPath( MD2FullFilepath ) )
+					.DefaultAssetName( DefaultAssetName )
 			];
 	}
 }
@@ -221,14 +231,24 @@ FText SMD2OptionsWindow::GetImportTypeDisplayText( ) const
 
 FReply SMD2OptionsWindow::OnImport( )
 {
-	bShouldImport = true;
+	ImportOptions->bShouldImport = true;
 	if ( WidgetWindow.IsValid( ) )
 	{
 		WidgetWindow.Pin( )->RequestDestroyWindow( );
 	}
 
-	// parse the UI to build the options the user selected
+	ImportOptions->TextureImportList.Empty( );
 
+
+	// iterate over the child widgets to get the textures for import
+	FChildren* Children = TextureListBox->GetChildren( );
+	for ( int32 i = 0; i < Children->Num( ); i++ )
+	{
+		TSharedPtr < SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
+
+		TPair<FString, FString> Pair( TextWidget->GetAssetFilename( ), TextWidget->GetAssetName( ) );
+		ImportOptions->TextureImportList.Add( Pair );
+	}
 
 	return FReply::Handled( );
 }

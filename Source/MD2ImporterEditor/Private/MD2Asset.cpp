@@ -179,9 +179,9 @@ UMD2Asset::~UMD2Asset( )
 
 bool UMD2Asset::Load( const FString& MD2Filename )
 {
-	if ( Filename.Len() > 0 )
+	if ( Filename.Len( ) > 0 )
 	{
-		UE_LOG( LogTemp, Warning, TEXT("UMD2Asset already loaded.") );
+		UE_LOG( LogTemp, Warning, TEXT( "UMD2Asset already loaded." ) );
 		return false;
 	}
 

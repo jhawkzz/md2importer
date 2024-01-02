@@ -7,6 +7,7 @@
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
 #include "DesktopPlatformModule.h"
+#include "HAL/FileManagerGeneric.h"
 
 #define LOCTEXT_NAMESPACE "MD2TextureImportWidget"
 
@@ -14,38 +15,57 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 {
 	WidgetWindow = InArgs._WidgetWindow;
 	TextureFilename = InArgs._TextureName;
-	TextureAssetName = InArgs._TextureName;
 	DefaultBrowseFilepath = InArgs._DefaultBrowseFilepath;
-	
-	//todo: validate its existence, and setup state based on that
-	// use defaultBrowseFilepath + TetureFIlename and look recursively from there.
-
 
 	this->ChildSlot
 		[
 			SNew( SBorder )
 				.Padding( FMargin( 3 ) )
-				.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
 				[
 					SNew( SVerticalBox )
 						+ SVerticalBox::Slot( )
 						.AutoHeight( )
 						.Padding( 2.0f )
 						[
-							SNew( SHorizontalBox )
-								+ SHorizontalBox::Slot( )
-								.AutoWidth( )
+							SNew( SVerticalBox )
+								+ SVerticalBox::Slot( )
+								.AutoHeight( )
 								[
-									SNew( STextBlock )
-										.Text( FText::FromString( TextureAssetName ) )
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.AutoWidth( )
+										[
+											SNew( STextBlock )
+												.Text( LOCTEXT( "SMD2TextureImportWidget_SourceTexture_TT", "Source: " ) )
+										]
+										+ SHorizontalBox::Slot( )
+										.Padding( 5, 0, 0, 0 )
+										.AutoWidth( )
+										.VAlign( VAlign_Center )
+										[
+											SAssignNew( AssetFilenameTB, STextBlock )
+										]
 								]
-								+ SHorizontalBox::Slot( )
+								+ SVerticalBox::Slot( )
 								.Padding( 5, 0, 0, 0 )
-								.AutoWidth( )
+								.AutoHeight( )
 								.VAlign( VAlign_Center )
 								[
-									SNew( STextBlock )
-										.Text( FText::FromString( TextureAssetName ) )
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.AutoWidth( )
+										[
+											SNew( STextBlock )
+												.Text( LOCTEXT( "SMD2TextureImportWidget_AssetName_TT", "Asset Name: " ) )
+										]
+										+ SHorizontalBox::Slot( )
+										.Padding( 5, 0, 0, 0 )
+										.AutoWidth( )
+										.VAlign( VAlign_Center )
+										[
+											SAssignNew( AssetNameTB, SEditableText )
+												.Text( FText::FromString( InArgs._DefaultAssetName ) )
+										]
 								]
 						]
 						+ SVerticalBox::Slot( )
@@ -73,6 +93,22 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 				]
 		];
 
+	// if the file exists, put it in the asset filename tb. Otherwise,
+	// leave it blank and alert that they need to resolve a missing asset.
+	TArray<FString> FoundFiles;
+	FFileManagerGeneric FileManager;
+	FileManager.FindFilesRecursive( FoundFiles, *DefaultBrowseFilepath, *TextureFilename, true, false, false );
+
+	if ( FoundFiles.Num( ) > 0 )
+	{
+		// technically there could be multiple files found due to the recursive search,
+		// so just use the first one.
+		SetAssetFilename( FoundFiles[ 0 ] );
+	}
+	else
+	{
+		// todo: flag error, and dont allow the parent window to import
+	}
 }
 
 FReply SMD2TextureImportWidget::OnBrowse( )
@@ -94,7 +130,11 @@ FReply SMD2TextureImportWidget::OnBrowse( )
 			OpenFilenames
 		);
 
-		// todo: update filename
+		// update the filename based on what was selected
+		if ( bOpened && OpenFilenames.Num( ) > 0 )
+		{
+			this->SetAssetFilename( OpenFilenames[ 0 ] );
+		}
 	}
 
 	return FReply::Handled( );

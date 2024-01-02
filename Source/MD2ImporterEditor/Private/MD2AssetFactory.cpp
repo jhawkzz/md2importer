@@ -57,7 +57,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		bOutOperationCanceled = true;
 		return nullptr;
 	}
-	
+
 	//Importing is done and working, including re-import!
 	//TODO: There are two minor bugs on static mesh: 
 	// 1. I can't seem to rename the created asset. If it doesn't match the filename, Content Drawer won't show it.
@@ -85,15 +85,19 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	TArray<FString> PCXTextureNames;
 	MD2Asset->GetPCXTextureList( PCXTextureNames );
 
-	//TODO: Now that we have MD2TextureImportWidget working
-	// - get the browse button working, and the texture asset name field editable
-	// - get the remove button working
-	// - importOptions (below) will then have a validated file path for each texture,
-	// - so we wont need FindPCX files - instead, we can just pass the data into BuildSkinAssetNames
-	//		so it can copy the stuff over into the MD2SkinIMportData struct
-	// BIGGEST UNKNOWN NOW - How will i have a UI that lets them merge textures into a single material?
-	const MD2ImportOptions* ImportOptions = GetImportOptions( InParent->GetPathName( ), PCXTextureNames );
-	if ( ImportOptions == nullptr )
+	//TODOs:
+	// How will i have a UI that lets them merge N textures into a single material?
+	// Expose mesh import options to the UI
+	// Add/Remove texture slots
+	// Support (or remove) Reset to Defaults
+	// CLeanup code (remove junk taken over from FBX import)
+
+	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,
+	// it's safe and i know we wont leak / go out of scope.
+	TSharedPtr<FMD2ImportOptions> ImportOptions = MakeShareable<FMD2ImportOptions>( new FMD2ImportOptions( ) );
+
+	GetImportOptions( InParent->GetPathName( ), Filename, PCXTextureNames, ImportOptions );
+	if ( ImportOptions->bShouldImport == false )
 	{
 		bOutOperationCanceled = true;
 		return nullptr;
@@ -106,22 +110,15 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// The MD2 spec provides the relative skin path in the model. Since it's unlikely that path still exists,
 	// assume those files will be in a folder or subfolder of the MD2.
 
-	// todo: This will instead iterate over whatever was provided from md2options
-	TArray<FString> PCXFiles;
-	FindPCXFiles( MeshFileBasePath, PCXTextureNames, PCXFiles );
-
-	// build a list of filename / texture asset name pairings
-	TArray<FMD2SkinImportData> SkinImports;
-	BuildSkinAssetNames( PCXFiles, MeshFileName, SkinImports );
-
-
 	TArray<TWeakObjectPtr<UMaterial>> Materials;
-	for ( int i = 0; i < SkinImports.Num( ); i++ )
+	for ( int i = 0; i < ImportOptions->TextureImportList.Num( ); i++ )
 	{
-		FString TextureFullFilename = MeshFileBasePath / SkinImports[ i ].TextureFilename + TEXT( "." ) + SkinImports[ i ].TextureExtension;
-		UTexture* Texture = ImportTexture( InParent, TextureFullFilename, SkinImports[ i ].TextureAssetName, SkinImports[ i ].TextureExtension, CreatedObjects );
+		UTexture* Texture = ImportTexture( InParent, ImportOptions->TextureImportList[ i ].Key, ImportOptions->TextureImportList[ i ].Value, UMD2Asset::TEXTURE_FORMAT, CreatedObjects );
 
-		UMaterial* Material = CreateMaterial( InParent, Texture, SkinImports[ i ].MaterialAssetName, CreatedObjects );
+		//todo: expose this to the UI
+		FString MaterialAssetName = ObjectTools::SanitizeObjectName( TEXT( "M_" ) + MeshAssetName + TEXT( "_" ) + ImportOptions->TextureImportList[ i ].Value + TEXT( "_D" ) );
+
+		UMaterial* Material = CreateMaterial( InParent, Texture, MaterialAssetName, CreatedObjects );
 		Materials.Add( Material );
 	}
 
@@ -136,7 +133,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	return StaticMesh;
 }
 
-const MD2ImportOptions* UMD2AssetFactory::GetImportOptions( const FString& FullPath, TArray<FString>& TextureNames )
+void UMD2AssetFactory::GetImportOptions( const FString& MD2AssetPath, const FString& MD2FullFilepath, TArray<FString>& TextureNames, TSharedPtr<FMD2ImportOptions> OutImportOptions )
 {
 	TSharedPtr<SWindow> ParentWindow;
 
@@ -173,42 +170,35 @@ const MD2ImportOptions* UMD2AssetFactory::GetImportOptions( const FString& FullP
 	Window->SetContent
 	(
 		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
-			.WidgetWindow( Window )
-			.TextureList( TextureNames )
-			.FullPath( FullPath )
-			.MaxWindowHeight( MD2ImportWindowHeight )
-			.MaxWindowWidth( MD2ImportWindowWidth )
+		.WidgetWindow( Window )
+		.TextureList( TextureNames )
+		.MD2AssetPath( MD2AssetPath )
+		.MD2FullFilepath( MD2FullFilepath )
+		.MaxWindowHeight( MD2ImportWindowHeight )
+		.MaxWindowWidth( MD2ImportWindowWidth )
+		.ImportOptions( OutImportOptions )
 	);
 
 	// @todo: we can make this slow as showing progress bar later
 	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
-
-	// if everything went ok, return actual options. Otherwise, return nullptr, implying we shouldn't import
-	if ( MD2OptionsWindow->ShouldImport( ) )
-	{
-		return MD2OptionsWindow->GetImportOptions( );
-	}
-	else
-	{
-		return nullptr;
-	}
 }
 
 UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,
 	const FString& TextureFullFilename,
-	FString& InOutTextureAssetName,
+	const FString& InRequestedTextureAssetName,
 	const FString& TextureExtension,
 	TArray<TWeakObjectPtr<UObject>>& OutCreatedObjects )
 {
 	// Put the texture in the base of the package they selected for import (So like, /Game/)
 	FString BasePackageName = FPackageName::GetLongPackagePath( InParent->GetOutermost( )->GetName( ) );
-	FString TexturePackageName = BasePackageName / InOutTextureAssetName;
+	FString TexturePackageName = BasePackageName / InRequestedTextureAssetName;
 	TexturePackageName = UPackageTools::SanitizePackageName( TexturePackageName );
 
 	// First check if the asset already exists.
 	UTexture* ExistingTexture = LoadObject<UTexture>( NULL, *TexturePackageName, nullptr, LOAD_Quiet | LOAD_NoWarn );
 
 	UPackage* TexturePackage = NULL;
+	FString TextureAssetName = InRequestedTextureAssetName;
 	if ( !ExistingTexture )
 	{
 		// it doesn't exist, so create the package with as close a name as possible (or the same if there's no name collision)
@@ -217,12 +207,11 @@ UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,
 		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>( "AssetTools" );
 		FString FinalPackageName;
 
-		FString RequestedTextureAssetName = InOutTextureAssetName; //backup what they WANTED, so we can warn if it changed.
-		AssetToolsModule.Get( ).CreateUniqueAssetName( TexturePackageName, Suffix, FinalPackageName, InOutTextureAssetName );
+		AssetToolsModule.Get( ).CreateUniqueAssetName( TexturePackageName, Suffix, FinalPackageName, TextureAssetName );
 
-		if ( RequestedTextureAssetName != InOutTextureAssetName )
+		if ( InRequestedTextureAssetName != TextureAssetName )
 		{
-			UE_LOG( LogTemp, Warning, TEXT( "Texture Asset Name Changed on import. Requested: %s Actual: %s" ), *RequestedTextureAssetName, *InOutTextureAssetName );
+			UE_LOG( LogTemp, Warning, TEXT( "Texture Asset Name Changed on import. Requested: %s Actual: %s" ), *InRequestedTextureAssetName, *TextureAssetName );
 		}
 
 		TexturePackage = CreatePackage( *FinalPackageName );
@@ -245,10 +234,10 @@ UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,
 
 		// save texture settings if texture exist
 		TextureFactory->SuppressImportOverwriteDialog( );
-		const bool bTextureAssetAlreadyExists = FindObject<UTexture>( TexturePackage, *InOutTextureAssetName ) != nullptr;
+		const bool bTextureAssetAlreadyExists = FindObject<UTexture>( TexturePackage, *TextureAssetName ) != nullptr;
 
 		UnrealTexture = (UTexture*)TextureFactory->FactoryCreateBinary(
-			UTexture2D::StaticClass( ), TexturePackage, *InOutTextureAssetName,
+			UTexture2D::StaticClass( ), TexturePackage, *TextureAssetName,
 			RF_Standalone | RF_Public, NULL, *TextureExtension,
 			DataPtr, DataPtr + TextureData.Num( ), GWarn );
 
@@ -357,7 +346,8 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 	return UnrealMaterial;
 }
 
-UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
+UStaticMesh* UMD2AssetFactory::ImportMD2Asset( 
+	UObject* InParent,
 	UMD2Asset* MD2Asset,
 	const FString& MD2FullFilename,
 	FString& InOutStaticMeshAssetName,
@@ -433,39 +423,6 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset( UObject* InParent,
 	}
 
 	return StaticMesh;
-}
-
-void UMD2AssetFactory::BuildSkinAssetNames( const TArray<FString>& PCXFiles, const FString& ParentMeshName, TArray<struct FMD2SkinImportData>& OutSkinImports )
-{
-	for ( auto PCXFile : PCXFiles )
-	{
-		FMD2SkinImportData SkinImportData;
-		SkinImportData.TextureFilename = FPaths::GetBaseFilename( PCXFile, true );
-		SkinImportData.TextureExtension = UMD2Asset::TEXTURE_FORMAT;
-		SkinImportData.TextureAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + ParentMeshName + TEXT( "_" ) + SkinImportData.TextureFilename + TEXT( "_D" ) );
-		SkinImportData.MaterialAssetName = ObjectTools::SanitizeObjectName( TEXT( "M_" ) + ParentMeshName + TEXT( "_" ) + SkinImportData.TextureFilename + TEXT( "_D" ) );
-
-		OutSkinImports.Add( SkinImportData );
-	}
-}
-
-void UMD2AssetFactory::FindPCXFiles( const FString& SearchFileBasePath, TArray<FString>& InTextureNames, TArray<FString>& OutPCXFiles )
-{
-	TArray<FString> FoundFiles;
-
-	// search for all files in the format supported by MD2
-	FFileManagerGeneric FileManager;
-	for ( int i = 0; i < InTextureNames.Num(); i++ )
-	{
-		int32 CurrNum = OutPCXFiles.Num( );
-		FileManager.FindFilesRecursive( OutPCXFiles, *SearchFileBasePath, *InTextureNames[i], true, false, false );
-
-		// if Num() didn't increase, the file wasn't there
-		if ( CurrNum == OutPCXFiles.Num( ) )
-		{
-			UE_LOG( LogTemp, Warning, TEXT( "MD2 Import: Could not find texture: %s" ), *InTextureNames[ i ] );
-		}
-	}
 }
 
 float UMD2AssetFactory::ScaleForDPI( float Value )

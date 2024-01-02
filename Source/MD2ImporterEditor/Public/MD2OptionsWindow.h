@@ -12,11 +12,17 @@ class SButton;
 struct FGeometry;
 
 //todo: Put this in its own file
-struct MD2ImportOptions
+struct FMD2ImportOptions
 {
-	TArray<TPair<FString,FString>> TextureImportList;
+	FMD2ImportOptions( )
+		: bShouldImport( false )
+		, bSingleMaterialWithBlend( false )
+	{}
+
+	TArray<TPair<FString, FString>> TextureImportList;
 	TArray<FString> MaterialNameList;
-	
+
+	bool bShouldImport;
 	bool bSingleMaterialWithBlend;
 };
 
@@ -25,17 +31,21 @@ class MD2IMPORTEREDITOR_API SMD2OptionsWindow : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS( SMD2OptionsWindow )
 		: _WidgetWindow( )
-		, _FullPath( )
+		, _MD2AssetPath( )
+		, _MD2FullFilepath( )
 		, _MaxWindowHeight( 0.0f )
 		, _MaxWindowWidth( 0.0f )
 		, _TextureList( )
+		, _ImportOptions( )
 		{}
 
 		SLATE_ARGUMENT( TSharedPtr<SWindow>, WidgetWindow )
-		SLATE_ARGUMENT( FString, FullPath )
+		SLATE_ARGUMENT( FString, MD2AssetPath )
+		SLATE_ARGUMENT( FString, MD2FullFilepath )
 		SLATE_ARGUMENT( float, MaxWindowHeight )
 		SLATE_ARGUMENT( float, MaxWindowWidth )
 		SLATE_ARGUMENT( TArray<FString>, TextureList )
+		SLATE_ARGUMENT( TSharedPtr<FMD2ImportOptions>, ImportOptions )
 	SLATE_END_ARGS( )
 
 public:
@@ -46,7 +56,7 @@ public:
 
 	FReply OnCancel( )
 	{
-		bShouldImport = false;
+		ImportOptions->bShouldImport = false;
 		if ( WidgetWindow.IsValid( ) )
 		{
 			WidgetWindow.Pin( )->RequestDestroyWindow( );
@@ -64,18 +74,7 @@ public:
 		return FReply::Unhandled( );
 	}
 
-	bool ShouldImport( ) const
-	{
-		return bShouldImport;
-	}
-
-	const MD2ImportOptions* GetImportOptions( ) const
-	{
-		return &ImportOptions;
-	}
-
 	SMD2OptionsWindow( )
-		: bShouldImport( false )
 	{}
 
 private:
@@ -88,10 +87,10 @@ private:
 private:
 	TSharedPtr<class IDetailsView> DetailsView;
 	TWeakPtr<SWindow> WidgetWindow;
+	TSharedPtr<FMD2ImportOptions> ImportOptions;
 	TSharedPtr<SButton> ImportAllButton;
 	TSharedPtr<SVerticalBox> TextureListBox;
 	TArray<FString>		TextureList;
-	FString				MD2Fullpath;
-	bool				bShouldImport;
-	MD2ImportOptions    ImportOptions;
+	FString				MD2AssetPath;
+	FString				MD2FullFilepath;
 };
