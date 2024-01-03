@@ -11,20 +11,25 @@
 class SButton;
 struct FGeometry;
 
+using FSMD2TextureImportWidgetSlot = int32;
+
+DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetSlot )
+
 class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS( SMD2TextureImportWidget )
-		: _WidgetWindow( )
-		, _TextureName( )
+		: _TextureName( )
 		, _DefaultAssetName( )
 		, _DefaultBrowseFilepath( )
+		, _Slot( -1 )
 		{}
 
-		SLATE_ARGUMENT( TSharedPtr<SWindow>, WidgetWindow )
 		SLATE_ARGUMENT( FString, TextureName )
 		SLATE_ARGUMENT( FString, DefaultAssetName )
 		SLATE_ARGUMENT( FString, DefaultBrowseFilepath )
+		SLATE_ARGUMENT( int32, Slot )
+		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
 	SLATE_END_ARGS( )
 
 public:
@@ -55,10 +60,11 @@ private:
 	FReply OnRemove( );
 
 private:
-	TWeakPtr<SWindow> WidgetWindow;
 	TSharedPtr<STextBlock> AssetFilenameTB;
 	TSharedPtr<SEditableText> AssetNameTB;;
 	FString TextureFilename;
 	FString TextureAssetName;
 	FString DefaultBrowseFilepath;
+	int32 Slot;
+	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
 };

@@ -7,6 +7,7 @@
 #include "Input/Events.h"
 #include "Input/Reply.h"
 #include "InputCoreTypes.h"
+#include "SMD2TextureImportWidget.h"
 
 class SButton;
 struct FGeometry;
@@ -73,6 +74,8 @@ public:
 
 		return FReply::Unhandled( );
 	}
+
+	void OnRemoveTextureSlot( FSMD2TextureImportWidgetSlot WidgetSlot );
 
 	SMD2OptionsWindow( )
 	{}

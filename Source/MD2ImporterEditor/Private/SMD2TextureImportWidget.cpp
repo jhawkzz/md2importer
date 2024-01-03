@@ -13,9 +13,10 @@
 
 void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 {
-	WidgetWindow = InArgs._WidgetWindow;
 	TextureFilename = InArgs._TextureName;
 	DefaultBrowseFilepath = InArgs._DefaultBrowseFilepath;
+	OnTextureWidgetRemoved = InArgs._OnTextureWidgetRemoved;
+	Slot = InArgs._Slot;
 
 	this->ChildSlot
 		[
@@ -142,6 +143,8 @@ FReply SMD2TextureImportWidget::OnBrowse( )
 
 FReply SMD2TextureImportWidget::OnRemove( )
 {
+	OnTextureWidgetRemoved.ExecuteIfBound( Slot );
+
 	return FReply::Handled( );
 }
 

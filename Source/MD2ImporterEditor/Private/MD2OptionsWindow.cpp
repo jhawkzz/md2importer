@@ -6,7 +6,6 @@
 #include "IDocumentation.h"
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
-#include "SMD2TextureImportWidget.h"
 #include "ObjectTools.h"
 #include "Templates/SharedPointer.h"
 
@@ -172,6 +171,8 @@ void SMD2OptionsWindow::RebuildTextureListFromData( TArray<FString>& InTextureLi
 					.TextureName( TextureList[ i ] )
 					.DefaultBrowseFilepath( FPaths::GetPath( MD2FullFilepath ) )
 					.DefaultAssetName( DefaultAssetName )
+					.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureSlot )
+					.Slot( i )
 			];
 	}
 }
@@ -244,12 +245,20 @@ FReply SMD2OptionsWindow::OnImport( )
 	FChildren* Children = TextureListBox->GetChildren( );
 	for ( int32 i = 0; i < Children->Num( ); i++ )
 	{
-		TSharedPtr < SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
+		TSharedPtr<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
 
 		TPair<FString, FString> Pair( TextWidget->GetAssetFilename( ), TextWidget->GetAssetName( ) );
 		ImportOptions->TextureImportList.Add( Pair );
 	}
 
 	return FReply::Handled( );
+}
+
+void SMD2OptionsWindow::OnRemoveTextureSlot( FSMD2TextureImportWidgetSlot WidgetSlot )
+{
+	//TODO: SLot is no good, because it changes when the object before it is removed.
+	// fix that (maybe pass in a tag we can compare again? I dont want to compare mem addresses)
+	TSharedRef<SWidget> WidgetRef = TextureListBox->GetChildren( )->GetChildAt( WidgetSlot );
+	TextureListBox->RemoveSlot( WidgetRef );
 }
 #undef LOCTEXT_NAMESPACE

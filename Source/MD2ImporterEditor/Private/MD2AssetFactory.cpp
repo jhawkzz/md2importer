@@ -91,6 +91,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// Add/Remove texture slots
 	// Support (or remove) Reset to Defaults
 	// CLeanup code (remove junk taken over from FBX import)
+	// Validate and warn if a texture can't be found when creating the UI
 
 	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,
 	// it's safe and i know we wont leak / go out of scope.
