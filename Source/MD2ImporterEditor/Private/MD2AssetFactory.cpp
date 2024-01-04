@@ -88,9 +88,9 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	//TODOs:
 	// How will i have a UI that lets them merge N textures into a single material?
 	// Expose mesh import options to the UI
-	// Add/Remove texture slots
-	// Support (or remove) Reset to Defaults
-	// CLeanup code (remove junk taken over from FBX import)
+	// Fix "Add texture" button layout
+	// Fix editable texture name fields (hard to see)
+	// Fix styling of filename paths, the ../s are way too much
 	// Validate and warn if a texture can't be found when creating the UI
 
 	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,
@@ -149,7 +149,6 @@ void UMD2AssetFactory::GetImportOptions( const FString& MD2AssetPath, const FStr
 	const float MD2ImportWindowHeight = 750.0f;
 	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
 
-
 	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
 	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
 	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
@@ -158,7 +157,6 @@ void UMD2AssetFactory::GetImportOptions( const FString& MD2AssetPath, const FStr
 	MD2ImportWindowSize *= ScaleFactor;
 
 	FVector2D WindowPosition = (DisplayTopLeft + (DisplaySize - MD2ImportWindowSize) / 2.0f) / ScaleFactor;
-
 
 	TSharedRef<SWindow> Window = SNew( SWindow )
 		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOptionsTitle", "MD2 Import Options" ) )
@@ -180,7 +178,6 @@ void UMD2AssetFactory::GetImportOptions( const FString& MD2AssetPath, const FStr
 		.ImportOptions( OutImportOptions )
 	);
 
-	// @todo: we can make this slow as showing progress bar later
 	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
 }
 
@@ -347,7 +344,7 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 	return UnrealMaterial;
 }
 
-UStaticMesh* UMD2AssetFactory::ImportMD2Asset( 
+UStaticMesh* UMD2AssetFactory::ImportMD2Asset(
 	UObject* InParent,
 	UMD2Asset* MD2Asset,
 	const FString& MD2FullFilename,

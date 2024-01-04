@@ -14,14 +14,11 @@
 void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 {
 	WidgetWindow = InArgs._WidgetWindow;
-	TextureList = InArgs._TextureList;
-	MD2AssetPath = InArgs._MD2AssetPath;
-	MD2FullFilepath = InArgs._MD2FullFilepath;
+	StartingTextureList = InArgs._TextureList;
+	StartingMD2AssetPath = InArgs._MD2AssetPath;
+	StartingMD2FullFilepath = InArgs._MD2FullFilepath;
 	ImportOptions = InArgs._ImportOptions;
 
-	TSharedPtr<SBox> ImportTypeDisplay;
-	TSharedPtr<SHorizontalBox> MD2HeaderButtons;
-	TSharedPtr<SBox> InspectorBox;
 	this->ChildSlot
 		[
 			SNew( SBox )
@@ -33,7 +30,31 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 						.AutoHeight( )
 						.Padding( 2.0f )
 						[
-							SAssignNew( ImportTypeDisplay, SBox )
+							SNew( SBorder )
+								.Padding( FMargin( 3 ) )
+								.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
+								[
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.VAlign( VAlign_Center )
+										.AutoWidth( )
+										[
+											IDocumentation::Get( )->CreateAnchor( UMD2Asset::REFERENCE_URL )
+										]
+										+ SHorizontalBox::Slot( )
+										.HAlign( HAlign_Right )
+										[
+											SNew( SHorizontalBox )
+												+ SHorizontalBox::Slot( )
+												.AutoWidth( )
+												.Padding( FMargin( 2.0f, 0.0f ) )
+												[
+													SNew( SButton )
+														.Text( LOCTEXT( "SMD2OptionsWindow_ResetOptions", "Reset to Default" ) )
+														.OnClicked( this, &SMD2OptionsWindow::OnResetToDefaultClick )
+												]
+										]
+								]
 						]
 						+ SVerticalBox::Slot( )
 						.AutoHeight( )
@@ -48,7 +69,7 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 										.AutoWidth( )
 										[
 											SNew( STextBlock )
-												.Text( LOCTEXT( "Import_CurrentFileTitle", "Current Asset: " ) )
+												.Text( LOCTEXT( "SMD2OptionsWindow_CurrentAsset", "Current Asset: " ) )
 										]
 										+ SHorizontalBox::Slot( )
 										.Padding( 5, 0, 0, 0 )
@@ -56,18 +77,10 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 										.VAlign( VAlign_Center )
 										[
 											SNew( STextBlock )
-												.Text( FText::FromString( MD2AssetPath ) )
-												.ToolTipText( FText::FromString( MD2AssetPath ) )
+												.Text( FText::FromString( StartingMD2AssetPath ) )
+												.ToolTipText( FText::FromString( StartingMD2AssetPath ) )
 										]
 								]
-						]
-						+ SVerticalBox::Slot( )
-						.AutoHeight( )
-						.Padding( 2.0f )
-						[
-							SAssignNew( InspectorBox, SBox )
-								.MaxDesiredHeight( 650.0f )
-								.WidthOverride( 400.0f )
 						]
 						+ SVerticalBox::Slot( )
 						.AutoHeight( )
@@ -79,13 +92,22 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 						.AutoHeight( )
 						.Padding( 2.0f )
 						[
+							SNew( SButton )
+								.HAlign( HAlign_Right )
+								.Text( LOCTEXT( "SMD2OptionsWindow_AddTexture", "Add Texture" ) )
+								.OnClicked( this, &SMD2OptionsWindow::OnAddTextureWidget )
+						]
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f )
+						[
 							SNew( SUniformGridPanel )
 								.SlotPadding( 2.0f )
 								+ SUniformGridPanel::Slot( 1, 0 )
 								[
-									SAssignNew( ImportAllButton, SPrimaryButton )
-										.Text( LOCTEXT( "MD2OptionWindow_Import", "Import" ) )
-										.ToolTipText( LOCTEXT( "MD2OptionWindow_Import_ToolTip", "Import MD2 file and selected textures" ) )
+									SAssignNew( ImportButton, SPrimaryButton )
+										.Text( LOCTEXT( "SMD2OptionsWindow_Import", "Import" ) )
+										.ToolTipText( LOCTEXT( "SMD2OptionsWindow_Import_ToolTip", "Import MD2 file and selected textures" ) )
 										.IsEnabled( this, &SMD2OptionsWindow::CanImport )
 										.OnClicked( this, &SMD2OptionsWindow::OnImport )
 								]
@@ -101,133 +123,56 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 				]
 		];
 
-	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>( "PropertyEditor" );
-	FDetailsViewArgs DetailsViewArgs;
-	DetailsViewArgs.bAllowSearch = false;
-	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-	DetailsView = PropertyEditorModule.CreateDetailView( DetailsViewArgs );
-
-	InspectorBox->SetContent( DetailsView->AsShared( ) );
-
-	ImportTypeDisplay->SetContent(
-		SNew( SBorder )
-		.Padding( FMargin( 3 ) )
-		.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
-		[
-			SNew( SHorizontalBox )
-				+ SHorizontalBox::Slot( )
-				.AutoWidth( )
-				.VAlign( VAlign_Center )
-				[
-					SNew( STextBlock )
-						.Text( this, &SMD2OptionsWindow::GetImportTypeDisplayText )
-				]
-				+ SHorizontalBox::Slot( )
-				.VAlign( VAlign_Center )
-				.AutoWidth( )
-				[
-					IDocumentation::Get( )->CreateAnchor( UMD2Asset::REFERENCE_URL )
-				]
-				+ SHorizontalBox::Slot( )
-				.HAlign( HAlign_Right )
-				[
-					SAssignNew( MD2HeaderButtons, SHorizontalBox )
-						+ SHorizontalBox::Slot( )
-						.AutoWidth( )
-						.Padding( FMargin( 2.0f, 0.0f ) )
-						[
-							SNew( SButton )
-								.Text( LOCTEXT( "MD2OptionWindow_ResetOptions", "Reset to Default" ) )
-								.OnClicked( this, &SMD2OptionsWindow::OnResetToDefaultClick )
-						]
-				]
-		]
-	);
-
-	//DetailsView->SetObject( ImportUI );
-
-	RebuildTextureListFromData( TextureList );
+	BuildTextureListFromData( StartingTextureList );
 
 	RegisterActiveTimer( 0.f, FWidgetActiveTimerDelegate::CreateSP( this, &SMD2OptionsWindow::SetFocusPostConstruct ) );
-
 }
 
-void SMD2OptionsWindow::RebuildTextureListFromData( TArray<FString>& InTextureList )
+void SMD2OptionsWindow::BuildTextureListFromData( TArray<FString>& InTextureList )
 {
-	TextureList = InTextureList;
-
 	TextureListBox->ClearChildren( );
 
-	FString MD2Filename = FPaths::GetBaseFilename( MD2FullFilepath, true );
+	FString MD2Filename = FPaths::GetBaseFilename( StartingMD2FullFilepath, true );
 
-	for ( int32 i = 0; i < TextureList.Num( ); i++ )
+	for ( int32 i = 0; i < InTextureList.Num( ); i++ )
 	{
 		// setup a default asset name to help the artist
-		FString DefaultAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + MD2Filename + TEXT( "_" ) + TextureList[ i ] + TEXT( "_D" ) );
+		FString DefaultAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + MD2Filename + TEXT( "_" ) + InTextureList[ i ] + TEXT( "_D" ) );
 
 		TextureListBox->AddSlot( )
 			[
 				SNew( SMD2TextureImportWidget )
-					.TextureName( TextureList[ i ] )
-					.DefaultBrowseFilepath( FPaths::GetPath( MD2FullFilepath ) )
+					.TextureName( InTextureList[ i ] )
+					.DefaultBrowseFilepath( FPaths::GetPath( StartingMD2FullFilepath ) )
 					.DefaultAssetName( DefaultAssetName )
-					.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureSlot )
-					.Slot( i )
+					.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
+					.ID( i )
 			];
 	}
 }
 
 EActiveTimerReturnType SMD2OptionsWindow::SetFocusPostConstruct( double InCurrentTime, float InDeltaTime )
 {
-	if ( ImportAllButton.IsValid( ) )
+	if ( ImportButton.IsValid( ) )
 	{
-		FSlateApplication::Get( ).SetKeyboardFocus( ImportAllButton, EFocusCause::SetDirectly );
+		FSlateApplication::Get( ).SetKeyboardFocus( ImportButton, EFocusCause::SetDirectly );
 	}
 
 	return EActiveTimerReturnType::Stop;
-
 }
 
 bool SMD2OptionsWindow::CanImport( )  const
-{/*
-	// do test to see if we are ready to import
-	if ( ImportUI->MeshTypeToImport == FBXIT_Animation )
-	{
-		if ( ImportUI->Skeleton == NULL || !ImportUI->bImportAnimations )
-		{
-			return false;
-		}
-	}
-
-	if ( ImportUI->AnimSequenceImportData->AnimationLength == FBXALIT_SetRange )
-	{
-		if ( ImportUI->AnimSequenceImportData->FrameImportRange.Min > ImportUI->AnimSequenceImportData->FrameImportRange.Max )
-		{
-			return false;
-		}
-	}
-	*/
+{
 	return true;
 }
-FReply SMD2OptionsWindow::OnResetToDefaultClick( ) const
+
+FReply SMD2OptionsWindow::OnResetToDefaultClick( )
 {
-	/*ImportUI->ResetToDefault( );
-	//Refresh the view to make sure the custom UI are updating correctly
-	DetailsView->SetObject( ImportUI, true );*/
+	BuildTextureListFromData( StartingTextureList );
+
+	//todo: restore checkboxes for default mesh options (once they're added)
+
 	return FReply::Handled( );
-}
-FText SMD2OptionsWindow::GetImportTypeDisplayText( ) const
-{
-	/*switch ( ImportUI->MeshTypeToImport )
-	{
-	case EFBXImportType::FBXIT_Animation:
-		return ImportUI->bIsReimport ? LOCTEXT( "FbxOptionWindow_ReImportTypeAnim", "Reimport Animation" ) : LOCTEXT( "FbxOptionWindow_ImportTypeAnim", "Import Animation" );
-	case EFBXImportType::FBXIT_SkeletalMesh:
-		return ImportUI->bIsReimport ? LOCTEXT( "FbxOptionWindow_ReImportTypeSK", "Reimport Skeletal Mesh" ) : LOCTEXT( "FbxOptionWindow_ImportTypeSK", "Import Skeletal Mesh" );
-	case EFBXImportType::FBXIT_StaticMesh:
-		return ImportUI->bIsReimport ? LOCTEXT( "FbxOptionWindow_ReImportTypeSM", "Reimport Static Mesh" ) : LOCTEXT( "FbxOptionWindow_ImportTypeSM", "Import Static Mesh" );
-	}*/
-	return FText::GetEmpty( );
 }
 
 FReply SMD2OptionsWindow::OnImport( )
@@ -240,12 +185,11 @@ FReply SMD2OptionsWindow::OnImport( )
 
 	ImportOptions->TextureImportList.Empty( );
 
-
 	// iterate over the child widgets to get the textures for import
 	FChildren* Children = TextureListBox->GetChildren( );
 	for ( int32 i = 0; i < Children->Num( ); i++ )
 	{
-		TSharedPtr<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
+		TSharedRef<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
 
 		TPair<FString, FString> Pair( TextWidget->GetAssetFilename( ), TextWidget->GetAssetName( ) );
 		ImportOptions->TextureImportList.Add( Pair );
@@ -254,11 +198,50 @@ FReply SMD2OptionsWindow::OnImport( )
 	return FReply::Handled( );
 }
 
-void SMD2OptionsWindow::OnRemoveTextureSlot( FSMD2TextureImportWidgetSlot WidgetSlot )
+void SMD2OptionsWindow::OnRemoveTextureWidget( FSMD2TextureImportWidgetID WidgetID )
 {
-	//TODO: SLot is no good, because it changes when the object before it is removed.
-	// fix that (maybe pass in a tag we can compare again? I dont want to compare mem addresses)
-	TSharedRef<SWidget> WidgetRef = TextureListBox->GetChildren( )->GetChildAt( WidgetSlot );
-	TextureListBox->RemoveSlot( WidgetRef );
+	TSharedPtr<SMD2TextureImportWidget> WidgetPtr = GetTextureWidgetFromID( WidgetID );
+
+	if ( WidgetPtr.IsValid( ) )
+	{
+		TSharedRef<SMD2TextureImportWidget> WidgetRef = WidgetPtr.ToSharedRef( );
+		TextureListBox->RemoveSlot( WidgetRef );
+
+		//todo: See if we can re-enable import (in case it was disabled) since we may have removed
+		// an unresolved texture
+	}
+}
+
+FReply SMD2OptionsWindow::OnAddTextureWidget( )
+{
+	TextureListBox->AddSlot( )
+		[
+			SNew( SMD2TextureImportWidget )
+				.TextureName( FString( ) )
+				.DefaultBrowseFilepath( FPaths::GetPath( StartingMD2FullFilepath ) )
+				.DefaultAssetName( FString( ) )
+				.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
+				.ID( TextureListBox->GetChildren( )->Num( ) )
+		];
+
+	//todo: Disable import, since we KNOW we now have an unresolved texture
+
+	return FReply::Handled( );
+}
+
+TSharedPtr<SMD2TextureImportWidget> SMD2OptionsWindow::GetTextureWidgetFromID( int ID )
+{
+	FChildren* Children = TextureListBox->GetChildren( );
+	for ( int32 i = 0; i < Children->Num( ); i++ )
+	{
+		TSharedPtr<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
+
+		if ( TextWidget->GetID( ) == ID )
+		{
+			return TextWidget;
+		}
+	}
+
+	return TSharedPtr<SMD2TextureImportWidget>( );
 }
 #undef LOCTEXT_NAMESPACE

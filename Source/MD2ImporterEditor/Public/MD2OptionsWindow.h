@@ -75,7 +75,7 @@ public:
 		return FReply::Unhandled( );
 	}
 
-	void OnRemoveTextureSlot( FSMD2TextureImportWidgetSlot WidgetSlot );
+	void OnRemoveTextureWidget( FSMD2TextureImportWidgetID WidgetID );
 
 	SMD2OptionsWindow( )
 	{}
@@ -83,17 +83,19 @@ public:
 private:
 	EActiveTimerReturnType SetFocusPostConstruct( double InCurrentTime, float InDeltaTime );
 	bool CanImport( ) const;
-	FReply OnResetToDefaultClick( ) const;
-	FText GetImportTypeDisplayText( ) const;
-	void RebuildTextureListFromData( TArray<FString>& TextureList );
+	FReply OnResetToDefaultClick( );
+	void BuildTextureListFromData( TArray<FString>& TextureList );
+	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int ID );
+	FReply OnAddTextureWidget( );
 
 private:
-	TSharedPtr<class IDetailsView> DetailsView;
 	TWeakPtr<SWindow> WidgetWindow;
 	TSharedPtr<FMD2ImportOptions> ImportOptions;
-	TSharedPtr<SButton> ImportAllButton;
+	TSharedPtr<SButton> ImportButton;
 	TSharedPtr<SVerticalBox> TextureListBox;
-	TArray<FString>		TextureList;
-	FString				MD2AssetPath;
-	FString				MD2FullFilepath;
+
+	// used for initial setup and restoing defaults
+	TArray<FString>		StartingTextureList;
+	FString				StartingMD2AssetPath;
+	FString				StartingMD2FullFilepath;
 };

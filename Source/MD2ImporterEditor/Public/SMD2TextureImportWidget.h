@@ -11,9 +11,9 @@
 class SButton;
 struct FGeometry;
 
-using FSMD2TextureImportWidgetSlot = int32;
+using FSMD2TextureImportWidgetID = int32;
 
-DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetSlot )
+DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetID )
 
 class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 {
@@ -22,13 +22,13 @@ public:
 		: _TextureName( )
 		, _DefaultAssetName( )
 		, _DefaultBrowseFilepath( )
-		, _Slot( -1 )
+		, _ID( -1 )
 		{}
 
 		SLATE_ARGUMENT( FString, TextureName )
 		SLATE_ARGUMENT( FString, DefaultAssetName )
 		SLATE_ARGUMENT( FString, DefaultBrowseFilepath )
-		SLATE_ARGUMENT( int32, Slot )
+		SLATE_ARGUMENT( int32, ID )
 		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
 	SLATE_END_ARGS( )
 
@@ -49,6 +49,11 @@ public:
 		return AssetNameTB->GetText( ).ToString( );
 	}
 
+	int32 GetID( )
+	{
+		return ID;
+	}
+
 private:
 	void SetAssetFilename( const FString& InAssetFilename )
 	{
@@ -65,6 +70,6 @@ private:
 	FString TextureFilename;
 	FString TextureAssetName;
 	FString DefaultBrowseFilepath;
-	int32 Slot;
+	int32 ID;
 	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
 };
