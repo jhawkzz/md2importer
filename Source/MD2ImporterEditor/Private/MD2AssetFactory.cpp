@@ -92,6 +92,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// Fix editable texture name fields (hard to see)
 	// Fix styling of filename paths, the ../s are way too much
 	// Validate and warn if a texture can't be found when creating the UI
+	// Remove the engine side plugin portion of this
 
 	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,
 	// it's safe and i know we wont leak / go out of scope.

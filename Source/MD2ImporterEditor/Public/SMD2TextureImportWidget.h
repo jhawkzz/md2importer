@@ -10,10 +10,13 @@
 
 class SButton;
 struct FGeometry;
+class SMD2TextWidget;
+class SMD2EditableTextWidget;
 
 using FSMD2TextureImportWidgetID = int32;
 
 DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetID )
+DECLARE_DELEGATE_OneParam( FOnTextureNotFound, FSMD2TextureImportWidgetID )
 
 class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 {
@@ -30,6 +33,7 @@ public:
 		SLATE_ARGUMENT( FString, DefaultBrowseFilepath )
 		SLATE_ARGUMENT( int32, ID )
 		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
+		SLATE_EVENT( FOnTextureNotFound, OnTextureNotFound )
 	SLATE_END_ARGS( )
 
 public:
@@ -39,15 +43,8 @@ public:
 	SMD2TextureImportWidget( )
 	{}
 
-	const FString& GetAssetFilename( )
-	{
-		return AssetFilenameTB->GetText( ).ToString( );
-	}
-
-	const FString& GetAssetName( )
-	{
-		return AssetNameTB->GetText( ).ToString( );
-	}
+	const FString& GetAssetFilename( );
+	const FString& GetAssetName( );
 
 	int32 GetID( )
 	{
@@ -55,21 +52,20 @@ public:
 	}
 
 private:
-	void SetAssetFilename( const FString& InAssetFilename )
-	{
-		AssetFilenameTB->SetText( FText::FromString( InAssetFilename ) );
-		AssetFilenameTB->SetToolTipText( FText::FromString( InAssetFilename ) );
-	}
+	void SetAssetFilename( const FString& InAssetFilename );
 
 	FReply OnBrowse( );
 	FReply OnRemove( );
 
 private:
-	TSharedPtr<STextBlock> AssetFilenameTB;
-	TSharedPtr<SEditableText> AssetNameTB;;
+	TSharedPtr<SMD2TextWidget> AssetFilenameTB;
+	TSharedPtr<SMD2EditableTextWidget> AssetNameTB;
+
+	TSharedPtr<SBorder> WidgetBorder;
 	FString TextureFilename;
 	FString TextureAssetName;
 	FString DefaultBrowseFilepath;
 	int32 ID;
 	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
+	FOnTextureWidgetRemoved OnTextureNotFound;
 };

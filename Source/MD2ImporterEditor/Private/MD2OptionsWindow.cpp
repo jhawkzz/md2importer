@@ -146,6 +146,7 @@ void SMD2OptionsWindow::BuildTextureListFromData( TArray<FString>& InTextureList
 					.DefaultBrowseFilepath( FPaths::GetPath( StartingMD2FullFilepath ) )
 					.DefaultAssetName( DefaultAssetName )
 					.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
+					.OnTextureNotFound( this, &SMD2OptionsWindow::OnTextureNotFound )
 					.ID( i )
 			];
 	}
@@ -212,6 +213,24 @@ void SMD2OptionsWindow::OnRemoveTextureWidget( FSMD2TextureImportWidgetID Widget
 	}
 }
 
+void SMD2OptionsWindow::OnTextureNotFound( FSMD2TextureImportWidgetID WidgetID )
+{
+	// if a texture couldn't be found, disable importing until they resolve it
+	ToggleImportEnabled( false );
+}
+
+void SMD2OptionsWindow::ToggleImportEnabled( bool bEnabled )
+{
+	if ( bEnabled )
+	{
+		ImportButton->SetEnabled( true );
+	}
+	else
+	{
+		ImportButton->SetEnabled( false );
+	}
+}
+
 FReply SMD2OptionsWindow::OnAddTextureWidget( )
 {
 	TextureListBox->AddSlot( )
@@ -221,10 +240,12 @@ FReply SMD2OptionsWindow::OnAddTextureWidget( )
 				.DefaultBrowseFilepath( FPaths::GetPath( StartingMD2FullFilepath ) )
 				.DefaultAssetName( FString( ) )
 				.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
+				.OnTextureNotFound( this, &SMD2OptionsWindow::OnTextureNotFound )
 				.ID( TextureListBox->GetChildren( )->Num( ) )
 		];
 
-	//todo: Disable import, since we KNOW we now have an unresolved texture
+	// disable import, because we know for sure we have a missing texture
+	ToggleImportEnabled( false );
 
 	return FReply::Handled( );
 }

@@ -76,6 +76,7 @@ public:
 	}
 
 	void OnRemoveTextureWidget( FSMD2TextureImportWidgetID WidgetID );
+	void OnTextureNotFound( FSMD2TextureImportWidgetID WidgetID );
 
 	SMD2OptionsWindow( )
 	{}
@@ -87,6 +88,7 @@ private:
 	void BuildTextureListFromData( TArray<FString>& TextureList );
 	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int ID );
 	FReply OnAddTextureWidget( );
+	void ToggleImportEnabled( bool bEnabled );
 
 private:
 	TWeakPtr<SWindow> WidgetWindow;
