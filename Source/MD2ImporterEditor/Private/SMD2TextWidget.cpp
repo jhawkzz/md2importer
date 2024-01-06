@@ -27,7 +27,7 @@ void SMD2TextWidget::Construct( const FArguments& InArgs )
 				[
 					SAssignNew( InnerBorder, SBorder )
 						.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-						.Padding( FMargin( 0.0f, 2.0f ) )
+						.Padding( FMargin( 4.0f, 2.0f ) )
 						.VAlign( VAlign_Center )
 				]
 		]

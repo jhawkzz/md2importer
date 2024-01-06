@@ -17,6 +17,7 @@ using FSMD2TextureImportWidgetID = int32;
 
 DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetID )
 DECLARE_DELEGATE_OneParam( FOnTextureNotFound, FSMD2TextureImportWidgetID )
+DECLARE_DELEGATE_OneParam( FOnTextureSet, FSMD2TextureImportWidgetID )
 
 class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 {
@@ -34,6 +35,7 @@ public:
 		SLATE_ARGUMENT( int32, ID )
 		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
 		SLATE_EVENT( FOnTextureNotFound, OnTextureNotFound )
+		SLATE_EVENT( FOnTextureSet, OnTextureSet )
 	SLATE_END_ARGS( )
 
 public:
@@ -51,6 +53,11 @@ public:
 		return ID;
 	}
 
+	bool TextureFileExists( )
+	{
+		return bTextureFileExists;
+	}
+
 private:
 	void SetAssetFilename( const FString& InAssetFilename );
 
@@ -60,12 +67,14 @@ private:
 private:
 	TSharedPtr<SMD2TextWidget> AssetFilenameTB;
 	TSharedPtr<SMD2EditableTextWidget> AssetNameTB;
-
-	TSharedPtr<SBorder> WidgetBorder;
+	TSharedPtr<SBorder> HeaderBorder;
 	FString TextureFilename;
 	FString TextureAssetName;
 	FString DefaultBrowseFilepath;
-	int32 ID;
+	int32 ID{ -1 };
 	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
-	FOnTextureWidgetRemoved OnTextureNotFound;
+	FOnTextureNotFound OnTextureNotFound;
+	FOnTextureSet OnTextureSet;
+	bool bTextureFileExists{ false };
+	FSlateColor HeaderBorderDefaultBackgroundColor;
 };

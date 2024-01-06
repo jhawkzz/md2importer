@@ -89,6 +89,9 @@ private:
 	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int ID );
 	FReply OnAddTextureWidget( );
 	void ToggleImportEnabled( bool bEnabled );
+	void OnTextureSet( FSMD2TextureImportWidgetID WidgetID );
+	void TryEnableImport( );
+	void AddTextureSlot( int ID, const FString& InTextureName, const FString& InDefaultAssetName, const FString& InStartingMD2FullFilepath );
 
 private:
 	TWeakPtr<SWindow> WidgetWindow;

@@ -12,7 +12,8 @@ void SMD2EditableTextWidget::Construct( const FArguments& InArgs )
 	this->ChildSlot
 	[
 		SNew( SBorder )
-		.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+		//.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+		.BorderBackgroundColor( FLinearColor( FColor::Black ) )
 		[
 			SNew( SHorizontalBox )
 				+ SHorizontalBox::Slot( )
@@ -20,7 +21,7 @@ void SMD2EditableTextWidget::Construct( const FArguments& InArgs )
 				.FillWidth( 1 )
 				[
 					SAssignNew( InnerBorder, SBorder )
-						.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+						//.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
 						.Padding( FMargin( 0.0f, 2.0f ) )
 						.VAlign( VAlign_Center )
 				]
@@ -28,8 +29,7 @@ void SMD2EditableTextWidget::Construct( const FArguments& InArgs )
 	];
 
 	InnerBorder->SetContent( SAssignNew( EditableTextControl, SEditableText )
-		.Text( InArgs._Text )
-		//.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
+	.Text( InArgs._Text )
 	);
 }
 

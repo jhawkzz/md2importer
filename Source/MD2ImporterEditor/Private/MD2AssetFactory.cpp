@@ -77,7 +77,6 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	bool bResult = MD2Asset->Load( Filename );
 	if ( bResult == false )
 	{
-		//todo: Show a message box?
 		UE_LOG( LogTemp, Warning, TEXT( "Failed to load MD2 Asset %s" ), *Filename );
 		return nullptr;
 	}
@@ -87,11 +86,16 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 
 	//TODOs:
 	// How will i have a UI that lets them merge N textures into a single material?
+    // Show a message box if we can't load the md2 asset or any part of the import fails.
 	// Expose mesh import options to the UI
 	// Fix "Add texture" button layout
-	// Fix editable texture name fields (hard to see)
+	// Fix editable texture name fields (make them black background)
 	// Fix styling of filename paths, the ../s are way too much
-	// Validate and warn if a texture can't be found when creating the UI
+	// On actual import, handle the error if a file can't actually be found / opened.
+	// Fix newly added texture widgets (they're not wide enough)
+	// For newly added texture widgets, set a suggested asset name after they browse
+	// How to handle them usign a blank asset name and hitting import? (I think maybe just re-create a default one)
+	// Add material name edit field
 	// Remove the engine side plugin portion of this
 
 	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,

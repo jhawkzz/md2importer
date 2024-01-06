@@ -19,20 +19,43 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 	DefaultBrowseFilepath = InArgs._DefaultBrowseFilepath;
 	OnTextureWidgetRemoved = InArgs._OnTextureWidgetRemoved;
 	OnTextureNotFound = InArgs._OnTextureNotFound;
+	OnTextureSet = InArgs._OnTextureSet;
 	ID = InArgs._ID;
 
 	this->ChildSlot
 		[
 			// Outerbox
 			SNew( SVerticalBox )
-			// Source: Filename
+			// Header
 			+ SVerticalBox::Slot( )
 			.AutoHeight( )
-			.Padding( 2.0f )
+			.Padding( 2.0f, 0.0f )
 			[
 				SNew( SHorizontalBox )
 				+ SHorizontalBox::Slot( )
 				.Padding( 4.0f, 0.0f )
+				.FillWidth( 1.0f )
+				.VAlign( VAlign_Center )
+				[
+					SAssignNew( HeaderBorder, SBorder )
+					.Padding( 4.0f, 2.0f )
+					.BorderImage( FAppStyle::GetBrush( "Menu.Background" ) )
+					.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
+					[
+						SNew( STextBlock )
+						.Text( FText::FromString( FString( "Texture" ) ) )
+						.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
+					]
+				]
+			]
+			// Source: Filename
+			+ SVerticalBox::Slot( )
+			.AutoHeight( )
+			.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
+			[
+				SNew( SHorizontalBox )
+				+ SHorizontalBox::Slot( )
+				.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
 				.FillWidth( 1.0f )
 				.VAlign( VAlign_Center )
 				[
@@ -44,7 +67,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					]
 				]
 				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f )
+				.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
 				.FillWidth( 1.0f )
 				.VAlign( VAlign_Center )
 				[
@@ -62,7 +85,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 			[
 				SNew( SHorizontalBox )
 				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f )
+				.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
 				.FillWidth( 1.0f )
 				.VAlign( VAlign_Center )
 				[
@@ -74,7 +97,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					]
 				]
 				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f )
+				.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
 				.FillWidth( 1.0f )
 				.VAlign( VAlign_Center )
 				[
@@ -89,27 +112,30 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 			// Buttons
 			+ SVerticalBox::Slot( )
 			.AutoHeight( )
-			.Padding( 2.0f )
+			.Padding( 1.0f, 0.0f, 1.0f, 10.0f )
 			[
 				SNew( SUniformGridPanel )
-					.SlotPadding( 2.0f )
-					+ SUniformGridPanel::Slot( 1, 0 )
-					[
-						SNew( SButton )
-							.Text( LOCTEXT( "SMD2TextureImportWidget_Browse", "Browse..." ) )
-							.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Browse_TT", "Browse for texture" ) )
-							.OnClicked( this, &SMD2TextureImportWidget::OnBrowse )
-					]
-					+ SUniformGridPanel::Slot( 2, 0 )
-					[
-						SNew( SButton )
-							.HAlign( HAlign_Center )
-							.Text( LOCTEXT( "SMD2TextureImportWidget_Remove", "Remove" ) )
-							.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Remove+TT", "Remove this texture from import" ) )
-							.OnClicked( this, &SMD2TextureImportWidget::OnRemove )
-					]
+				.SlotPadding( 2.0f )
+				+ SUniformGridPanel::Slot( 1, 0 )
+				[
+					SNew( SButton )
+						.Text( LOCTEXT( "SMD2TextureImportWidget_Browse", "Browse..." ) )
+						.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Browse_TT", "Browse for texture" ) )
+						.OnClicked( this, &SMD2TextureImportWidget::OnBrowse )
+				]
+				+ SUniformGridPanel::Slot( 2, 0 )
+				[
+					SNew( SButton )
+						.HAlign( HAlign_Center )
+						.Text( LOCTEXT( "SMD2TextureImportWidget_Remove", "Remove" ) )
+						.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Remove+TT", "Remove this texture from import" ) )
+						.OnClicked( this, &SMD2TextureImportWidget::OnRemove )
+				]
 			]
 		];
+
+	// store this in the event we change it to show an error and need to later restore it
+	HeaderBorderDefaultBackgroundColor = HeaderBorder->GetBorderBackgroundColor( );
 
 	// if the creator provided a texture filename, validate it exists
 	// and populate our UI
@@ -124,13 +150,15 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 			// technically there could be multiple files found due to the recursive search,
 			// so just use the first one.
 			SetAssetFilename( FoundFiles[ 0 ] );
+			bTextureFileExists = true;
 		}
 		else
 		{
 			// since a default texture was provided, notify our parent that we couldn't find it
 			OnTextureNotFound.ExecuteIfBound( ID );
 
-			//WidgetBorder->SetBorderBackgroundColor( FLinearColor( FColor::Red ) );
+			HeaderBorder->SetBorderBackgroundColor( FLinearColor( FColor::Red ) );
+			bTextureFileExists = false;
 		}
 	}
 }
@@ -158,6 +186,17 @@ FReply SMD2TextureImportWidget::OnBrowse( )
 		if ( bOpened && OpenFilenames.Num( ) > 0 )
 		{
 			this->SetAssetFilename( OpenFilenames[ 0 ] );
+
+			// if there's no asset name set, set a suggested one
+			if ( TextureAssetName.Len( ) == 0 )
+			{
+				// todo: set
+			}
+
+			// restore the border background to a non error state and notify anyone that cares
+			bTextureFileExists = true;
+			HeaderBorder->SetBorderBackgroundColor( HeaderBorderDefaultBackgroundColor );
+			OnTextureSet.ExecuteIfBound( ID );
 		}
 	}
 
