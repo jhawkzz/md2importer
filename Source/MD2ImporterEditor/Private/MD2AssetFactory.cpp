@@ -96,7 +96,6 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	// Fix styling of filename paths, the ../s are way too much
 	// On actual import, handle the error if a file can't actually be found / opened.
 	// How to handle them usign a blank asset name and hitting import? (I think maybe just re-create a default one)
-	// Remove the engine side plugin portion of this
 	// Code cleanup pass (remove unncessary usings, includes, etc.) and move common things into an FMD2Utils class.
 	// 
 	// If you say "yes" to overwriting an import, and then hit cancel, the mesh is deleted.
@@ -285,7 +284,6 @@ UMaterial* UMD2AssetFactory::CreateMaterial( UObject* InParent,
 			TextureExpression->SamplerType = SAMPLERTYPE_Color;
 
 			// -250 seems to be what most importers use (looking at code examples), and looks nice.
-			// todo: if we need multiple textures, this will need to be updated
 			TextureExpression->MaterialExpressionEditorX = -250;
 
 			UnrealMaterial->GetExpressionCollection( ).AddExpression( TextureExpression );
