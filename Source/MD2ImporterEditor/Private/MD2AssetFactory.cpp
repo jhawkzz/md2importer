@@ -1,23 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MD2AssetFactory.h"
-#include "MD2Asset.h"
-#include "RawMesh.h"
-#include "Engine/StaticMeshActor.h"
+
 #include "Engine.h"
-#include "Factories/TextureFactory.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "RawMesh.h"
+#include "ObjectTools.h"
 #include "PackageTools.h"
 #include "AssetToolsModule.h"
-#include "ObjectTools.h"
-#include "EditorFramework/AssetImportData.h"
 #include "Materials/Material.h"
-#include "Factories/MaterialFactoryNew.h"
-#include "Materials/MaterialExpressionTextureSample.h"
 #include "HAL/FileManagerGeneric.h"
+#include "Engine/StaticMeshActor.h"
+#include "Factories/TextureFactory.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "Interfaces/IMainFrameModule.h"
+#include "Factories/MaterialFactoryNew.h"
+#include "EditorFramework/AssetImportData.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Materials/MaterialExpressionTextureSample.h"
+
+#include "MD2Util.h"
+#include "MD2Asset.h"
 #include "MD2OptionsWindow.h"
+#include "SMD2MessageBoxWidget.h"
 
 // note - so much help can be found in FbxMaterialImport.cpp (texture/material creation) and FbxMainImport.cpp (UI)
 
@@ -77,7 +80,10 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	bool bResult = MD2Asset->Load( Filename );
 	if ( bResult == false )
 	{
+		SMD2MessageBoxWidget::ShowMessageBox( TEXT( "MD2 Import Error" ), TEXT( "Failed to open MD2 Asset %s. Check the Output Log for more detail." ) );
 		UE_LOG( LogTemp, Warning, TEXT( "Failed to load MD2 Asset %s" ), *Filename );
+
+		bOutOperationCanceled = true; //set to true since we're showing our own error.
 		return nullptr;
 	}
 
@@ -85,24 +91,21 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	MD2Asset->GetPCXTextureList( PCXTextureNames );
 
 	//TODOs:
-	// How will i have a UI that lets them merge N textures into a single material?
-    // Show a message box if we can't load the md2 asset or any part of the import fails.
+	// add callbacks and buttons to MB
 	// Expose mesh import options to the UI
-	// Fix "Add texture" button layout
-	// Fix editable texture name fields (make them black background)
 	// Fix styling of filename paths, the ../s are way too much
 	// On actual import, handle the error if a file can't actually be found / opened.
-	// Fix newly added texture widgets (they're not wide enough)
-	// For newly added texture widgets, set a suggested asset name after they browse
 	// How to handle them usign a blank asset name and hitting import? (I think maybe just re-create a default one)
-	// Add material name edit field
 	// Remove the engine side plugin portion of this
+	// Code cleanup pass (remove unncessary usings, includes, etc.) and move common things into an FMD2Utils class.
+	// 
+	// If you say "yes" to overwriting an import, and then hit cancel, the mesh is deleted.
 
 	// Note JHM - Note 100% sure this is the right way to create, but given that it needs to be passed thru slate,
 	// it's safe and i know we wont leak / go out of scope.
 	TSharedPtr<FMD2ImportOptions> ImportOptions = MakeShareable<FMD2ImportOptions>( new FMD2ImportOptions( ) );
 
-	GetImportOptions( InParent->GetPathName( ), Filename, PCXTextureNames, ImportOptions );
+	SMD2OptionsWindow::ShowImportOptionsWindow( InParent->GetPathName( ), Filename, PCXTextureNames, ImportOptions );
 	if ( ImportOptions->bShouldImport == false )
 	{
 		bOutOperationCanceled = true;
@@ -121,10 +124,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	{
 		UTexture* Texture = ImportTexture( InParent, ImportOptions->TextureImportList[ i ].Key, ImportOptions->TextureImportList[ i ].Value, UMD2Asset::TEXTURE_FORMAT, CreatedObjects );
 
-		//todo: expose this to the UI
-		FString MaterialAssetName = ObjectTools::SanitizeObjectName( TEXT( "M_" ) + MeshAssetName + TEXT( "_" ) + ImportOptions->TextureImportList[ i ].Value + TEXT( "_D" ) );
-
-		UMaterial* Material = CreateMaterial( InParent, Texture, MaterialAssetName, CreatedObjects );
+		UMaterial* Material = CreateMaterial( InParent, Texture, ImportOptions->MaterialNameList[ i ], CreatedObjects );
 		Materials.Add( Material );
 	}
 
@@ -137,53 +137,6 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	StaticMesh->MarkPackageDirty( );
 
 	return StaticMesh;
-}
-
-void UMD2AssetFactory::GetImportOptions( const FString& MD2AssetPath, const FString& MD2FullFilepath, TArray<FString>& TextureNames, TSharedPtr<FMD2ImportOptions> OutImportOptions )
-{
-	TSharedPtr<SWindow> ParentWindow;
-
-	if ( FModuleManager::Get( ).IsModuleLoaded( "MainFrame" ) )
-	{
-		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>( "MainFrame" );
-		ParentWindow = MainFrame.GetParentWindow( );
-	}
-
-	// Compute centered window position based on max window size, which include when all categories are expanded
-	const float MD2ImportWindowWidth = 450.0f;
-	const float MD2ImportWindowHeight = 750.0f;
-	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
-
-	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
-	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
-	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
-
-	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
-	MD2ImportWindowSize *= ScaleFactor;
-
-	FVector2D WindowPosition = (DisplayTopLeft + (DisplaySize - MD2ImportWindowSize) / 2.0f) / ScaleFactor;
-
-	TSharedRef<SWindow> Window = SNew( SWindow )
-		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOptionsTitle", "MD2 Import Options" ) )
-		.SizingRule( ESizingRule::Autosized )
-		.AutoCenter( EAutoCenter::None )
-		.ClientSize( MD2ImportWindowSize )
-		.ScreenPosition( WindowPosition );
-
-	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
-	Window->SetContent
-	(
-		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
-		.WidgetWindow( Window )
-		.TextureList( TextureNames )
-		.MD2AssetPath( MD2AssetPath )
-		.MD2FullFilepath( MD2FullFilepath )
-		.MaxWindowHeight( MD2ImportWindowHeight )
-		.MaxWindowWidth( MD2ImportWindowWidth )
-		.ImportOptions( OutImportOptions )
-	);
-
-	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
 }
 
 UTexture* UMD2AssetFactory::ImportTexture( UObject* InParent,
@@ -426,17 +379,6 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset(
 	}
 
 	return StaticMesh;
-}
-
-float UMD2AssetFactory::ScaleForDPI( float Value )
-{
-	FSlateRect WorkAreaRect = FSlateApplicationBase::Get( ).GetPreferredWorkArea( );
-	FVector2D DisplayTopLeft( WorkAreaRect.Left, WorkAreaRect.Top );
-	FVector2D DisplaySize( WorkAreaRect.Right - WorkAreaRect.Left, WorkAreaRect.Bottom - WorkAreaRect.Top );
-
-	float ScaleFactor = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint( DisplayTopLeft.X, DisplayTopLeft.Y );
-
-	return ScaleFactor * Value;
 }
 
 void UMD2AssetFactory::TestCreateRawMesh( FRawMesh& OutRawMesh )

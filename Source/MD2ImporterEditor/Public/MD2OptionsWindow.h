@@ -3,16 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HAL/PlatformCrt.h"
-#include "Input/Events.h"
-#include "Input/Reply.h"
 #include "InputCoreTypes.h"
 #include "SMD2TextureImportWidget.h"
 
 class SButton;
 struct FGeometry;
 
-//todo: Put this in its own file
 struct FMD2ImportOptions
 {
 	FMD2ImportOptions( )
@@ -50,6 +46,8 @@ public:
 	SLATE_END_ARGS( )
 
 public:
+	static void ShowImportOptionsWindow( const FString& MD2AssetPath, const FString& MD2FullFilepath, TArray<FString>& TextureNames, TSharedPtr<FMD2ImportOptions> OutImportOptions );
+
 	void Construct( const FArguments& InArgs );
 	virtual bool SupportsKeyboardFocus( ) const override { return true; }
 
@@ -91,7 +89,7 @@ private:
 	void ToggleImportEnabled( bool bEnabled );
 	void OnTextureSet( FSMD2TextureImportWidgetID WidgetID );
 	void TryEnableImport( );
-	void AddTextureSlot( int ID, const FString& InTextureName, const FString& InDefaultAssetName, const FString& InStartingMD2FullFilepath );
+	void AddTextureSlot( int32 ID, const FString& InTextureName, const FString& InDefaultTextureAssetName, const FString& InDefaultMaterialAssetName, const FString& InStartingMD2FullFilepath );
 
 private:
 	TWeakPtr<SWindow> WidgetWindow;
@@ -99,7 +97,7 @@ private:
 	TSharedPtr<SButton> ImportButton;
 	TSharedPtr<SVerticalBox> TextureListBox;
 
-	// used for initial setup and restoing defaults
+	// used for initial setup and restoring defaults
 	TArray<FString>		StartingTextureList;
 	FString				StartingMD2AssetPath;
 	FString				StartingMD2FullFilepath;

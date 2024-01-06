@@ -10,8 +10,8 @@
 
 class SButton;
 struct FGeometry;
-class SMD2TextWidget;
-class SMD2EditableTextWidget;
+class SMD2TextBlockWidget;
+class SMD2EditableTextBoxWidget;
 
 using FSMD2TextureImportWidgetID = int32;
 
@@ -24,14 +24,18 @@ class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS( SMD2TextureImportWidget )
 		: _TextureName( )
-		, _DefaultAssetName( )
+		, _DefaultTextureAssetName( )
+		, _DefaultMaterialAssetName( )
 		, _DefaultBrowseFilepath( )
+		, _ParentMeshName( )
 		, _ID( -1 )
 		{}
 
 		SLATE_ARGUMENT( FString, TextureName )
-		SLATE_ARGUMENT( FString, DefaultAssetName )
+		SLATE_ARGUMENT( FString, DefaultTextureAssetName )
+		SLATE_ARGUMENT( FString, DefaultMaterialAssetName )
 		SLATE_ARGUMENT( FString, DefaultBrowseFilepath )
+		SLATE_ARGUMENT( FString, ParentMeshName )
 		SLATE_ARGUMENT( int32, ID )
 		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
 		SLATE_EVENT( FOnTextureNotFound, OnTextureNotFound )
@@ -45,8 +49,9 @@ public:
 	SMD2TextureImportWidget( )
 	{}
 
-	const FString& GetAssetFilename( );
-	const FString& GetAssetName( );
+	const FString& GetTextureAssetFilename( );
+	const FString& GetTextureAssetName( );
+	const FString& GetMaterialAssetName( );
 
 	int32 GetID( )
 	{
@@ -59,18 +64,19 @@ public:
 	}
 
 private:
-	void SetAssetFilename( const FString& InAssetFilename );
+	void SetTextureAssetFilename( const FString& InAssetFilename );
 
 	FReply OnBrowse( );
 	FReply OnRemove( );
 
 private:
-	TSharedPtr<SMD2TextWidget> AssetFilenameTB;
-	TSharedPtr<SMD2EditableTextWidget> AssetNameTB;
+	TSharedPtr<SMD2TextBlockWidget> TextureAssetFilenameTB;
+	TSharedPtr<SMD2EditableTextBoxWidget> TextureAssetNameETB;
+	TSharedPtr<SMD2EditableTextBoxWidget> MaterialAssetNameETB;
 	TSharedPtr<SBorder> HeaderBorder;
 	FString TextureFilename;
-	FString TextureAssetName;
 	FString DefaultBrowseFilepath;
+	FString ParentMeshName;
 	int32 ID{ -1 };
 	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
 	FOnTextureNotFound OnTextureNotFound;

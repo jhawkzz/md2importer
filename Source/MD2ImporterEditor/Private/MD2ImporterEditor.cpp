@@ -1,5 +1,4 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MD2ImporterEditor.h"
 
 #define LOCTEXT_NAMESPACE "FMD2ImporterEditorModule"

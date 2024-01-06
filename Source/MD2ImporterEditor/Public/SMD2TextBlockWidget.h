@@ -3,15 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "HAL/PlatformCrt.h"
-#include "Input/Events.h"
-#include "Input/Reply.h"
-#include "InputCoreTypes.h"
 
-class MD2IMPORTEREDITOR_API SMD2TextWidget : public SCompoundWidget
+// Simple wrapper for a text block that allows us to style for the look & feel of the plugin.
+
+class MD2IMPORTEREDITOR_API SMD2TextBlockWidget : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS( SMD2TextWidget )
+	SLATE_BEGIN_ARGS( SMD2TextBlockWidget )
 		: _Text()
 		{}
 
@@ -21,15 +19,14 @@ public:
 public:
 	void Construct( const FArguments& InArgs );
 
-	SMD2TextWidget( )
+	SMD2TextBlockWidget( )
 	{}
 
 	inline TSharedPtr<STextBlock> GetTextBlock( )
 	{
-		return TextControl;
+		return TextBlock;
 	}
 
 private:
-	TSharedPtr<STextBlock> TextControl;
-	FText DefaultText;
+	TSharedPtr<STextBlock> TextBlock;
 };

@@ -1,15 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SMD2TextureImportWidget.h"
-#include "MD2Asset.h"
+
 #include "IDocumentation.h"
 #include "Internationalization/Internationalization.h"
 #include "SPrimaryButton.h"
 #include "DesktopPlatformModule.h"
 #include "HAL/FileManagerGeneric.h"
-#include "SMD2TextWidget.h"
-#include "SMD2EditableTextWidget.h"
+
+#include "SMD2EditableTextBoxWidget.h"
+#include "SMD2TextBlockWidget.h"
+#include "MD2Util.h"
+#include "MD2Asset.h"
 
 #define LOCTEXT_NAMESPACE "SMD2TextureImportWidget"
 
@@ -17,6 +18,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 {
 	TextureFilename = InArgs._TextureName;
 	DefaultBrowseFilepath = InArgs._DefaultBrowseFilepath;
+	ParentMeshName = InArgs._ParentMeshName;
 	OnTextureWidgetRemoved = InArgs._OnTextureWidgetRemoved;
 	OnTextureNotFound = InArgs._OnTextureNotFound;
 	OnTextureSet = InArgs._OnTextureSet;
@@ -62,7 +64,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					SNew( SBorder )
 					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
 					[
-						SNew( SMD2TextWidget )
+						SNew( SMD2TextBlockWidget )
 						.Text( FText::FromString( FString( TEXT( "Source" ) ) ) )
 					]
 				]
@@ -74,11 +76,11 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					SNew( SBorder )
 					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
 					[
-						SAssignNew( AssetFilenameTB, SMD2TextWidget )
+						SAssignNew( TextureAssetFilenameTB, SMD2TextBlockWidget )
 					]
 				]
 			]
-			// Asset: Assetname
+			// Texture Asset: Assetname
 			+ SVerticalBox::Slot( )
 			.AutoHeight( )
 			.Padding( 2.0f )
@@ -92,8 +94,8 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					SNew( SBorder )
 					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
 					[
-						SNew( SMD2TextWidget )
-						.Text( FText::FromString( FString( TEXT( "Asset Name" ) ) ) )
+						SNew( SMD2TextBlockWidget )
+						.Text( FText::FromString( FString( TEXT( "Texture Asset Name" ) ) ) )
 					]
 				]
 				+ SHorizontalBox::Slot( )
@@ -104,10 +106,41 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 					SNew( SBorder )
 					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
 					[
-						SAssignNew( AssetNameTB, SMD2EditableTextWidget )
-						.Text( FText::FromString( InArgs._DefaultAssetName ) )
+						SAssignNew( TextureAssetNameETB, SMD2EditableTextBoxWidget )
+						.Text( FText::FromString( InArgs._DefaultTextureAssetName ) )
 					]
 				]
+			]
+			// Material Asset: Assetname
+			+ SVerticalBox::Slot( )
+			.AutoHeight( )
+			.Padding( 2.0f )
+			[
+				SNew( SHorizontalBox )
+					+ SHorizontalBox::Slot( )
+					.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
+					.FillWidth( 1.0f )
+					.VAlign( VAlign_Center )
+					[
+						SNew( SBorder )
+							.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+							[
+								SNew( SMD2TextBlockWidget )
+									.Text( FText::FromString( FString( TEXT( "Material Asset Name" ) ) ) )
+							]
+					]
+					+ SHorizontalBox::Slot( )
+					.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
+					.FillWidth( 1.0f )
+					.VAlign( VAlign_Center )
+					[
+						SNew( SBorder )
+							.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+							[
+								SAssignNew( MaterialAssetNameETB, SMD2EditableTextBoxWidget )
+									.Text( FText::FromString( InArgs._DefaultMaterialAssetName ) )
+							]
+					]
 			]
 			// Buttons
 			+ SVerticalBox::Slot( )
@@ -149,7 +182,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 		{
 			// technically there could be multiple files found due to the recursive search,
 			// so just use the first one.
-			SetAssetFilename( FoundFiles[ 0 ] );
+			SetTextureAssetFilename( FoundFiles[ 0 ] );
 			bTextureFileExists = true;
 		}
 		else
@@ -185,12 +218,23 @@ FReply SMD2TextureImportWidget::OnBrowse( )
 		// update the filename based on what was selected
 		if ( bOpened && OpenFilenames.Num( ) > 0 )
 		{
-			this->SetAssetFilename( OpenFilenames[ 0 ] );
+			this->SetTextureAssetFilename( OpenFilenames[ 0 ] );
+
+			FString Filename = FPaths::GetBaseFilename( OpenFilenames[ 0 ] );
 
 			// if there's no asset name set, set a suggested one
-			if ( TextureAssetName.Len( ) == 0 )
+			if ( TextureAssetNameETB->GetEditableTextBox( )->GetText( ).ToString().Len() == 0 )
 			{
-				// todo: set
+				FString TextureAssetName;
+				UMD2Util::CreateDefaultTextureAssetName( TextureAssetName, ParentMeshName, Filename );
+				TextureAssetNameETB->GetEditableTextBox( )->SetText( FText::FromString( TextureAssetName ) );
+			}
+
+			if ( MaterialAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( ).Len( ) == 0 )
+			{
+				FString MaterialAssetName;
+				UMD2Util::CreateDefaultMaterialAssetName( MaterialAssetName, ParentMeshName, Filename );
+				MaterialAssetNameETB->GetEditableTextBox( )->SetText( FText::FromString( MaterialAssetName ) );
 			}
 
 			// restore the border background to a non error state and notify anyone that cares
@@ -210,19 +254,24 @@ FReply SMD2TextureImportWidget::OnRemove( )
 	return FReply::Handled( );
 }
 
-const FString& SMD2TextureImportWidget::GetAssetFilename( )
+const FString& SMD2TextureImportWidget::GetTextureAssetFilename( )
 {
-	return AssetFilenameTB->GetTextBlock( )->GetText( ).ToString( );
+	return TextureAssetFilenameTB->GetTextBlock( )->GetText( ).ToString( );
 }
 
-const FString& SMD2TextureImportWidget::GetAssetName( )
+const FString& SMD2TextureImportWidget::GetTextureAssetName( )
 {
-	return AssetNameTB->GetTextBlock( )->GetText( ).ToString( );
+	return TextureAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( );
 }
 
-void SMD2TextureImportWidget::SetAssetFilename( const FString& InAssetFilename )
+const FString& SMD2TextureImportWidget::GetMaterialAssetName( )
 {
-	AssetFilenameTB->GetTextBlock( )->SetText( FText::FromString( InAssetFilename ) );
-	AssetFilenameTB->GetTextBlock( )->SetToolTipText( FText::FromString( InAssetFilename ) );
+	return MaterialAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( );
+}
+
+void SMD2TextureImportWidget::SetTextureAssetFilename( const FString& InAssetFilename )
+{
+	TextureAssetFilenameTB->GetTextBlock( )->SetText( FText::FromString( InAssetFilename ) );
+	TextureAssetFilenameTB->GetTextBlock( )->SetToolTipText( FText::FromString( InAssetFilename ) );
 }
 #undef LOCTEXT_NAMESPACE

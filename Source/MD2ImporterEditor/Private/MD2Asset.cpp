@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "MD2Asset.h"
+
 #include "RawMesh.h"
 
 const float UMD2Asset::NormalLookup[ PRECAL_NORM ][ 3 ]

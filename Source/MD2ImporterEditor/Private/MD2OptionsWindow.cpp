@@ -1,15 +1,55 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "MD2OptionsWindow.h"
-#include "MD2Asset.h"
-#include "IDocumentation.h"
-#include "Internationalization/Internationalization.h"
-#include "SPrimaryButton.h"
+
 #include "ObjectTools.h"
+#include "IDocumentation.h"
+#include "SPrimaryButton.h"
 #include "Templates/SharedPointer.h"
+#include "Interfaces/IMainFrameModule.h"
+#include "Internationalization/Internationalization.h"
+
+#include "MD2Util.h"
+#include "MD2Asset.h"
 
 #define LOCTEXT_NAMESPACE "MD2Option"
+
+void SMD2OptionsWindow::ShowImportOptionsWindow( const FString& MD2AssetPath, const FString& MD2FullFilepath, TArray<FString>& TextureNames, TSharedPtr<FMD2ImportOptions> OutImportOptions )
+{
+	const float MD2ImportWindowWidth = 450.0f;
+	const float MD2ImportWindowHeight = 750.0f;
+	FVector2D MD2ImportWindowSize = FVector2D( MD2ImportWindowWidth, MD2ImportWindowHeight ); // Max window size it can get based on current slate
+
+	FVector2D WindowPosition;
+	UMD2Util::GetCenterPosForWindow( WindowPosition, MD2ImportWindowWidth, MD2ImportWindowHeight );
+
+	TSharedRef<SWindow> Window = SNew( SWindow )
+		.Title( NSLOCTEXT( "UnrealEd", "MD2ImportOptionsTitle", "MD2 Import Options" ) )
+		.SizingRule( ESizingRule::Autosized )
+		.AutoCenter( EAutoCenter::None )
+		.ClientSize( MD2ImportWindowSize )
+		.ScreenPosition( WindowPosition );
+
+	TSharedPtr<SMD2OptionsWindow> MD2OptionsWindow;
+	Window->SetContent
+	(
+		SAssignNew( MD2OptionsWindow, SMD2OptionsWindow )
+		.WidgetWindow( Window )
+		.TextureList( TextureNames )
+		.MD2AssetPath( MD2AssetPath )
+		.MD2FullFilepath( MD2FullFilepath )
+		.MaxWindowHeight( MD2ImportWindowHeight )
+		.MaxWindowWidth( MD2ImportWindowWidth )
+		.ImportOptions( OutImportOptions )
+	);
+
+	TSharedPtr<SWindow> ParentWindow;
+	if ( FModuleManager::Get( ).IsModuleLoaded( "MainFrame" ) )
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>( "MainFrame" );
+		ParentWindow = MainFrame.GetParentWindow( );
+	}
+	FSlateApplication::Get( ).AddModalWindow( Window, ParentWindow, false );
+}
 
 void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 {
@@ -105,7 +145,6 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 						.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
 						[
 							SNew( STextBlock )
-
 							.Text( FText::FromString( FString("Textures to Import") ) )
 							.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
 						]
@@ -115,27 +154,37 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 				.AutoHeight( )
 				.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
 				[
-					SNew( SBox )
-					.HAlign( HAlign_Left )
-					.VAlign( VAlign_Top )
-					.WidthOverride( InArgs._MaxWindowWidth )
-					.HeightOverride( 500 )
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot( )
+					.AutoHeight( )
+					.Padding( 2.0f, 2.0f, 2.0f, 2.0f )
 					[
-						SNew( SScrollBox )
-						+ SScrollBox::Slot( )
+						SNew( SHorizontalBox )
+						+ SHorizontalBox::Slot( )
+						.MaxWidth( 200 )
+						.Padding( 2.0f )
+						.HAlign( HAlign_Left )
 						[
-							SAssignNew( TextureListBox, SVerticalBox )
+							SNew( SButton )
+							.Text( LOCTEXT( "SMD2OptionsWindow_AddTexture", "Add Texture" ) )
+							.OnClicked( this, &SMD2OptionsWindow::OnAddTextureWidget )
 						]
 					]
-				]
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f, 10.0f, 2.0f, 2.0f )
-				[
-					SNew( SButton )
-					.HAlign( HAlign_Right )
-					.Text( LOCTEXT( "SMD2OptionsWindow_AddTexture", "Add Texture" ) )
-					.OnClicked( this, &SMD2OptionsWindow::OnAddTextureWidget )
+					+ SVerticalBox::Slot( )
+					[
+						SNew( SBox )
+						.HAlign( HAlign_Left )
+						.VAlign( VAlign_Top )
+						.WidthOverride( InArgs._MaxWindowWidth )
+						.HeightOverride( 500 )
+						[
+							SNew( SScrollBox )
+							+ SScrollBox::Slot( )
+							[
+								SAssignNew( TextureListBox, SVerticalBox )
+							]
+						]
+					]
 				]
 				+ SVerticalBox::Slot( )
 				.AutoHeight( )
@@ -177,19 +226,27 @@ void SMD2OptionsWindow::BuildTextureListFromData( TArray<FString>& InTextureList
 	for ( int32 i = 0; i < InTextureList.Num( ); i++ )
 	{
 		// setup a default asset name to help the artist
-		FString DefaultAssetName = ObjectTools::SanitizeObjectName( TEXT( "T_" ) + MD2Filename + TEXT( "_" ) + InTextureList[ i ] + TEXT( "_D" ) );
-		AddTextureSlot( i, InTextureList[ i ], DefaultAssetName, StartingMD2FullFilepath );
+		FString TextureAssetName;
+		UMD2Util::CreateDefaultTextureAssetName( TextureAssetName, MD2Filename, FPaths::GetBaseFilename( InTextureList[ i ] ) );
+
+		FString MaterialAssetName;
+		UMD2Util::CreateDefaultMaterialAssetName( MaterialAssetName, MD2Filename, FPaths::GetBaseFilename( InTextureList[ i ] ) );
+
+		AddTextureSlot( i, InTextureList[ i ], TextureAssetName, MaterialAssetName, StartingMD2FullFilepath );
 	}
 }
 
-void SMD2OptionsWindow::AddTextureSlot( int32 ID, const FString& InTextureName, const FString& InDefaultAssetName, const FString& InStartingMD2FullFilepath )
+void SMD2OptionsWindow::AddTextureSlot( int32 ID, const FString& InTextureName, const FString& InDefaultTextureAssetName, const FString& InDefaultMaterialAssetName, const FString& InStartingMD2FullFilepath )
 {
-	TextureListBox->AddSlot( )
+	TextureListBox->InsertSlot( 0 )
+	//TextureListBox->AddSlot( )
 		[
 			SNew( SMD2TextureImportWidget )
 				.TextureName( InTextureName )
 				.DefaultBrowseFilepath( FPaths::GetPath( InStartingMD2FullFilepath ) )
-				.DefaultAssetName( InDefaultAssetName )
+				.DefaultTextureAssetName( InDefaultTextureAssetName )
+				.DefaultMaterialAssetName( InDefaultMaterialAssetName )
+				.ParentMeshName( FPaths::GetBaseFilename( InStartingMD2FullFilepath, true ) )
 				.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
 				.OnTextureNotFound( this, &SMD2OptionsWindow::OnTextureNotFound )
 				.OnTextureSet( this, &SMD2OptionsWindow::OnTextureSet )
@@ -237,8 +294,10 @@ FReply SMD2OptionsWindow::OnImport( )
 	{
 		TSharedRef<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
 
-		TPair<FString, FString> Pair( TextWidget->GetAssetFilename( ), TextWidget->GetAssetName( ) );
+		TPair<FString, FString> Pair( TextWidget->GetTextureAssetFilename( ), TextWidget->GetTextureAssetName( ) );
 		ImportOptions->TextureImportList.Add( Pair );
+
+		ImportOptions->MaterialNameList.Add( TextWidget->GetMaterialAssetName( ) );
 	}
 
 	return FReply::Handled( );
@@ -311,7 +370,7 @@ void SMD2OptionsWindow::ToggleImportEnabled( bool bEnabled )
 
 FReply SMD2OptionsWindow::OnAddTextureWidget( )
 {
-	AddTextureSlot( TextureListBox->GetChildren( )->Num( ) + 1, FString( ), FString( ), StartingMD2FullFilepath );
+	AddTextureSlot( TextureListBox->GetChildren( )->Num( ) + 1, FString( ), FString( ), FString( ), StartingMD2FullFilepath );
 
 	// disable import, because we know for sure we have a missing texture
 	ToggleImportEnabled( false );
