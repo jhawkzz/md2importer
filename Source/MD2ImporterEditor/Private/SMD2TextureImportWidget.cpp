@@ -1,12 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "SMD2TextureImportWidget.h"
 
-#include "IDocumentation.h"
-#include "Internationalization/Internationalization.h"
+// UE Includes
 #include "SPrimaryButton.h"
+#include "IDocumentation.h"
 #include "DesktopPlatformModule.h"
 #include "HAL/FileManagerGeneric.h"
+#include "Widgets/Layout/SUniformGridPanel.h"
+#include "Internationalization/Internationalization.h"
 
+// Project Includes
 #include "SMD2EditableTextBoxWidget.h"
 #include "SMD2TextBlockWidget.h"
 #include "MD2Util.h"
@@ -28,143 +31,143 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 		[
 			// Outerbox
 			SNew( SVerticalBox )
-			// Header
-			+ SVerticalBox::Slot( )
-			.AutoHeight( )
-			.Padding( 2.0f, 0.0f )
-			[
-				SNew( SHorizontalBox )
-				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f )
-				.FillWidth( 1.0f )
-				.VAlign( VAlign_Center )
+				// Header
+				+ SVerticalBox::Slot( )
+				.AutoHeight( )
+				.Padding( 2.0f, 0.0f )
 				[
-					SAssignNew( HeaderBorder, SBorder )
-					.Padding( 4.0f, 2.0f )
-					.BorderImage( FAppStyle::GetBrush( "Menu.Background" ) )
-					.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
-					[
-						SNew( STextBlock )
-						.Text( FText::FromString( FString( "Texture" ) ) )
-						.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
-					]
+					SNew( SHorizontalBox )
+						+ SHorizontalBox::Slot( )
+						.Padding( 4.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SAssignNew( HeaderBorder, SBorder )
+								.Padding( 4.0f, 2.0f )
+								.BorderImage( FAppStyle::GetBrush( "Menu.Background" ) )
+								.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
+								[
+									SNew( STextBlock )
+										.Text( FText::FromString( FString( "Texture" ) ) )
+										.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
+								]
+						]
 				]
-			]
-			// Source: Filename
-			+ SVerticalBox::Slot( )
-			.AutoHeight( )
-			.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
-			[
-				SNew( SHorizontalBox )
-				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
-				.FillWidth( 1.0f )
-				.VAlign( VAlign_Center )
+				// Source: Filename
+				+ SVerticalBox::Slot( )
+				.AutoHeight( )
+				.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
 				[
-					SNew( SBorder )
-					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-					[
-						SNew( SMD2TextBlockWidget )
-						.Text( FText::FromString( FString( TEXT( "Source" ) ) ) )
-					]
+					SNew( SHorizontalBox )
+						+ SHorizontalBox::Slot( )
+						.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SNew( SMD2TextBlockWidget )
+										.Text( FText::FromString( FString( TEXT( "Source" ) ) ) )
+								]
+						]
+						+ SHorizontalBox::Slot( )
+						.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SAssignNew( TextureAssetFilenameTB, SMD2TextBlockWidget )
+								]
+						]
 				]
-				+ SHorizontalBox::Slot( )
-				.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
-				.FillWidth( 1.0f )
-				.VAlign( VAlign_Center )
+				// Texture Asset: Assetname
+				+ SVerticalBox::Slot( )
+				.AutoHeight( )
+				.Padding( 2.0f, 2.0f, 2.0f, 0.0f )
 				[
-					SNew( SBorder )
-					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-					[
-						SAssignNew( TextureAssetFilenameTB, SMD2TextBlockWidget )
-					]
+					SNew( SHorizontalBox )
+						+ SHorizontalBox::Slot( )
+						.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SNew( SMD2TextBlockWidget )
+										.Text( FText::FromString( FString( TEXT( "Texture Asset Name" ) ) ) )
+								]
+						]
+						+ SHorizontalBox::Slot( )
+						.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SAssignNew( TextureAssetNameETB, SMD2EditableTextBoxWidget )
+										.Text( FText::FromString( InArgs._DefaultTextureAssetName ) )
+								]
+						]
 				]
-			]
-			// Texture Asset: Assetname
-			+ SVerticalBox::Slot( )
-			.AutoHeight( )
-			.Padding( 2.0f )
-			[
-				SNew( SHorizontalBox )
-				+ SHorizontalBox::Slot( )
-				.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
-				.FillWidth( 1.0f )
-				.VAlign( VAlign_Center )
+				// Material Asset: Assetname
+				+ SVerticalBox::Slot( )
+				.AutoHeight( )
+				.Padding( 2.0f )
 				[
-					SNew( SBorder )
-					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-					[
-						SNew( SMD2TextBlockWidget )
-						.Text( FText::FromString( FString( TEXT( "Texture Asset Name" ) ) ) )
-					]
+					SNew( SHorizontalBox )
+						+ SHorizontalBox::Slot( )
+						.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SNew( SMD2TextBlockWidget )
+										.Text( FText::FromString( FString( TEXT( "Material Asset Name" ) ) ) )
+								]
+						]
+						+ SHorizontalBox::Slot( )
+						.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
+						.FillWidth( 1.0f )
+						.VAlign( VAlign_Center )
+						[
+							SNew( SBorder )
+								.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
+								[
+									SAssignNew( MaterialAssetNameETB, SMD2EditableTextBoxWidget )
+										.Text( FText::FromString( InArgs._DefaultMaterialAssetName ) )
+								]
+						]
 				]
-				+ SHorizontalBox::Slot( )
-				.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
-				.FillWidth( 1.0f )
-				.VAlign( VAlign_Center )
+				// Buttons
+				+ SVerticalBox::Slot( )
+				.AutoHeight( )
+				.Padding( 1.0f, 0.0f, 1.0f, 10.0f )
 				[
-					SNew( SBorder )
-					.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-					[
-						SAssignNew( TextureAssetNameETB, SMD2EditableTextBoxWidget )
-						.Text( FText::FromString( InArgs._DefaultTextureAssetName ) )
-					]
+					SNew( SUniformGridPanel )
+						.SlotPadding( 2.0f )
+						+ SUniformGridPanel::Slot( 1, 0 )
+						[
+							SNew( SButton )
+								.Text( LOCTEXT( "SMD2TextureImportWidget_Browse", "Browse..." ) )
+								.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Browse_TT", "Browse for texture" ) )
+								.OnClicked( this, &SMD2TextureImportWidget::OnBrowse )
+						]
+						+ SUniformGridPanel::Slot( 2, 0 )
+						[
+							SNew( SButton )
+								.HAlign( HAlign_Center )
+								.Text( LOCTEXT( "SMD2TextureImportWidget_Remove", "Remove" ) )
+								.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Remove+TT", "Remove this texture from import" ) )
+								.OnClicked( this, &SMD2TextureImportWidget::OnRemove )
+						]
 				]
-			]
-			// Material Asset: Assetname
-			+ SVerticalBox::Slot( )
-			.AutoHeight( )
-			.Padding( 2.0f )
-			[
-				SNew( SHorizontalBox )
-					+ SHorizontalBox::Slot( )
-					.Padding( 4.0f, 0.0f, 1.0f, 0.0f )
-					.FillWidth( 1.0f )
-					.VAlign( VAlign_Center )
-					[
-						SNew( SBorder )
-							.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-							[
-								SNew( SMD2TextBlockWidget )
-									.Text( FText::FromString( FString( TEXT( "Material Asset Name" ) ) ) )
-							]
-					]
-					+ SHorizontalBox::Slot( )
-					.Padding( 1.0f, 0.0f, 4.0f, 0.0f )
-					.FillWidth( 1.0f )
-					.VAlign( VAlign_Center )
-					[
-						SNew( SBorder )
-							.BorderImage( FAppStyle::Get( ).GetBrush( "Brushes.Panel" ) )
-							[
-								SAssignNew( MaterialAssetNameETB, SMD2EditableTextBoxWidget )
-									.Text( FText::FromString( InArgs._DefaultMaterialAssetName ) )
-							]
-					]
-			]
-			// Buttons
-			+ SVerticalBox::Slot( )
-			.AutoHeight( )
-			.Padding( 1.0f, 0.0f, 1.0f, 10.0f )
-			[
-				SNew( SUniformGridPanel )
-				.SlotPadding( 2.0f )
-				+ SUniformGridPanel::Slot( 1, 0 )
-				[
-					SNew( SButton )
-						.Text( LOCTEXT( "SMD2TextureImportWidget_Browse", "Browse..." ) )
-						.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Browse_TT", "Browse for texture" ) )
-						.OnClicked( this, &SMD2TextureImportWidget::OnBrowse )
-				]
-				+ SUniformGridPanel::Slot( 2, 0 )
-				[
-					SNew( SButton )
-						.HAlign( HAlign_Center )
-						.Text( LOCTEXT( "SMD2TextureImportWidget_Remove", "Remove" ) )
-						.ToolTipText( LOCTEXT( "SMD2TextureImportWidget_Remove+TT", "Remove this texture from import" ) )
-						.OnClicked( this, &SMD2TextureImportWidget::OnRemove )
-				]
-			]
 		];
 
 	// store this in the event we change it to show an error and need to later restore it
@@ -172,7 +175,7 @@ void SMD2TextureImportWidget::Construct( const FArguments& InArgs )
 
 	// if the creator provided a texture filename, validate it exists
 	// and populate our UI
-	if ( TextureFilename.Len() > 0 )
+	if ( TextureFilename.Len( ) > 0 )
 	{
 		TArray<FString> FoundFiles;
 		FFileManagerGeneric FileManager;
@@ -223,7 +226,7 @@ FReply SMD2TextureImportWidget::OnBrowse( )
 			FString Filename = FPaths::GetBaseFilename( OpenFilenames[ 0 ] );
 
 			// if there's no asset name set, set a suggested one
-			if ( TextureAssetNameETB->GetEditableTextBox( )->GetText( ).ToString().Len() == 0 )
+			if ( TextureAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( ).Len( ) == 0 )
 			{
 				FString TextureAssetName;
 				UMD2Util::CreateDefaultTextureAssetName( TextureAssetName, ParentMeshName, Filename );

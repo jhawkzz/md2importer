@@ -2,6 +2,7 @@
 
 #pragma once
 
+// UE Includes
 #include "CoreMinimal.h"
 
 // Simple wrapper for an editable text box that allows us to style for the look & feel of the plugin.
@@ -9,7 +10,7 @@ class MD2IMPORTEREDITOR_API SMD2EditableTextBoxWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS( SMD2EditableTextBoxWidget )
-		: _Text()
+		: _Text( )
 		{}
 		SLATE_ARGUMENT( FText, Text )
 	SLATE_END_ARGS( )

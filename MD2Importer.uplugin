@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "Quake II MD2 Model Importer",
-	"Description": "Import Quake II MD2 models directly in Unreal Engine! Using the mesh and texture data, a Static Mesh is created. For each texture, a material and texture are created, with the material using a texture sampler node. All materials are then assigned to the Static Mesh.",
+	"Description": "Import Quake II MD2 models directly into Unreal Engine! Using the mesh and texture data, a Static Mesh is created. For each texture, a material and texture are created, with the material using a texture sampler node. All materials are then assigned to the Static Mesh.",
 	"Category": "Importers",
 	"CreatedBy": "Jered McFerron",
 	"CreatedByURL": "https://github.com/jhawkzz/md2importer",

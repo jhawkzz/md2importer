@@ -2,6 +2,7 @@
 
 #pragma once
 
+// UE Includes
 #include "CoreMinimal.h"
 
 using FSMD2MessageBoxWidgetCloseResult = uint32;
@@ -12,17 +13,13 @@ class MD2IMPORTEREDITOR_API SMD2MessageBoxWidget : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS( SMD2MessageBoxWidget )
 		: _WidgetWindow( )
-		, _MaxWindowHeight( 0.0f )
-		, _MaxWindowWidth( 0.0f )
-		, _Title()
-		, _Message()
-		, _AcceptButtonLabel()
-		, _CancelButtonLabel()
+		, _Title( )
+		, _Message( )
+		, _AcceptButtonLabel( )
+		, _CancelButtonLabel( )
 		{}
 
 		SLATE_ARGUMENT( TSharedPtr<SWindow>, WidgetWindow )
-		SLATE_ARGUMENT( float, MaxWindowHeight )
-		SLATE_ARGUMENT( float, MaxWindowWidth )
 		SLATE_ARGUMENT( FString, Title )
 		SLATE_ARGUMENT( FString, Message )
 		SLATE_ARGUMENT( FString, AcceptButtonLabel )
@@ -37,7 +34,7 @@ public:
 	};
 
 public:
-	static void ShowMessageBox( const FString& Title, const FString& Message );
+	static void ShowMessageBox( const FString& Title, const FString& Message, const FString& Accept, const FString& Cancel = FString( ), FOnMessageBoxClosed OnClosed = FOnMessageBoxClosed( ) );
 
 	void Construct( const FArguments& InArgs );
 
@@ -49,6 +46,9 @@ public:
 	{}
 
 private:
+	static const float MBWindowWidth;
+	static const float MBMaxWindowHeight;
+
 	TWeakPtr<SWindow> WidgetWindow;
 	FOnMessageBoxClosed OnMessageBoxClosed;
 };

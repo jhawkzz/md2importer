@@ -1,13 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "MD2OptionsWindow.h"
 
+// UE Includes
 #include "ObjectTools.h"
 #include "IDocumentation.h"
 #include "SPrimaryButton.h"
 #include "Templates/SharedPointer.h"
 #include "Interfaces/IMainFrameModule.h"
+#include "Widgets/Layout/SUniformGridPanel.h"
 #include "Internationalization/Internationalization.h"
 
+// Project Includes
 #include "MD2Util.h"
 #include "MD2Asset.h"
 
@@ -62,154 +65,154 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 	this->ChildSlot
 		[
 			SNew( SBox )
-			.MaxDesiredHeight( InArgs._MaxWindowHeight )
-			.MaxDesiredWidth( InArgs._MaxWindowWidth )
-			[
-				SNew( SVerticalBox )
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f )
+				.MaxDesiredHeight( InArgs._MaxWindowHeight )
+				.MaxDesiredWidth( InArgs._MaxWindowWidth )
 				[
-					SNew( SBorder )
-					.Padding( FMargin( 3 ) )
-					.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
-					[
-						SNew( SHorizontalBox )
-							+ SHorizontalBox::Slot( )
-							.VAlign( VAlign_Center )
-							.AutoWidth( )
-							[
-								SNew( STextBlock )
-									.Text( FText::FromString( TEXT( "Import Static Mesh" ) ) )
-							]
-							+ SHorizontalBox::Slot( )
-							.VAlign( VAlign_Center )
-							.AutoWidth( )
-							[
-								IDocumentation::Get( )->CreateAnchor( UMD2Asset::REFERENCE_URL )
-							]
-							+ SHorizontalBox::Slot( )
-							.HAlign( HAlign_Right )
-							[
-								SNew( SHorizontalBox )
-									+ SHorizontalBox::Slot( )
-									.AutoWidth( )
-									.Padding( FMargin( 2.0f, 0.0f ) )
-									[
-										SNew( SButton )
-											.Text( LOCTEXT( "SMD2OptionsWindow_ResetOptions", "Reset to Default" ) )
-											.OnClicked( this, &SMD2OptionsWindow::OnResetToDefaultClick )
-									]
-							]
-					]
-				]
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f )
-				[
-					SNew( SBorder )
-					.Padding( FMargin( 3 ) )
-					.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
-					[
-						SNew( SHorizontalBox )
-						+ SHorizontalBox::Slot( )
-						.AutoWidth( )
-						[
-							SNew( STextBlock )
-								.Text( LOCTEXT( "SMD2OptionsWindow_CurrentAsset", "Current Asset: " ) )
-						]
-						+ SHorizontalBox::Slot( )
-						.Padding( 5, 0, 0, 0 )
-						.AutoWidth( )
-						.VAlign( VAlign_Center )
-						[
-							SNew( STextBlock )
-								.Text( FText::FromString( StartingMD2AssetPath ) )
-								.ToolTipText( FText::FromString( StartingMD2AssetPath ) )
-						]
-					]
-				]
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
-				[
-					SNew( SHorizontalBox )
-					+ SHorizontalBox::Slot( )
-					.Padding( 6.0f, 3.0f )
-					.FillWidth( 1.0f )
-					.VAlign( VAlign_Center )
-					[
-						SNew( SBorder )
-						.Padding( 4.0f, 10.0f )
-						.BorderImage( FAppStyle::GetBrush( "Menu.Background" ) )
-						.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
-						[
-							SNew( STextBlock )
-							.Text( FText::FromString( FString("Textures to Import") ) )
-							.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
-						]
-					]
-				]
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
-				[
-					SNew(SVerticalBox)
-					+ SVerticalBox::Slot( )
-					.AutoHeight( )
-					.Padding( 2.0f, 2.0f, 2.0f, 2.0f )
-					[
-						SNew( SHorizontalBox )
-						+ SHorizontalBox::Slot( )
-						.MaxWidth( 200 )
+					SNew( SVerticalBox )
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
 						.Padding( 2.0f )
-						.HAlign( HAlign_Left )
 						[
-							SNew( SButton )
-							.Text( LOCTEXT( "SMD2OptionsWindow_AddTexture", "Add Texture" ) )
-							.OnClicked( this, &SMD2OptionsWindow::OnAddTextureWidget )
+							SNew( SBorder )
+								.Padding( FMargin( 3 ) )
+								.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
+								[
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.VAlign( VAlign_Center )
+										.AutoWidth( )
+										[
+											SNew( STextBlock )
+												.Text( FText::FromString( TEXT( "Import Static Mesh" ) ) )
+										]
+										+ SHorizontalBox::Slot( )
+										.VAlign( VAlign_Center )
+										.AutoWidth( )
+										[
+											IDocumentation::Get( )->CreateAnchor( UMD2Asset::REFERENCE_URL )
+										]
+										+ SHorizontalBox::Slot( )
+										.HAlign( HAlign_Right )
+										[
+											SNew( SHorizontalBox )
+												+ SHorizontalBox::Slot( )
+												.AutoWidth( )
+												.Padding( FMargin( 2.0f, 0.0f ) )
+												[
+													SNew( SButton )
+														.Text( LOCTEXT( "SMD2OptionsWindow_ResetOptions", "Reset to Default" ) )
+														.OnClicked( this, &SMD2OptionsWindow::OnResetToDefaultClick )
+												]
+										]
+								]
 						]
-					]
-					+ SVerticalBox::Slot( )
-					[
-						SNew( SBox )
-						.HAlign( HAlign_Left )
-						.VAlign( VAlign_Top )
-						.WidthOverride( InArgs._MaxWindowWidth )
-						.HeightOverride( 500 )
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f )
 						[
-							SNew( SScrollBox )
-							+ SScrollBox::Slot( )
-							[
-								SAssignNew( TextureListBox, SVerticalBox )
-							]
+							SNew( SBorder )
+								.Padding( FMargin( 3 ) )
+								.BorderImage( FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
+								[
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.AutoWidth( )
+										[
+											SNew( STextBlock )
+												.Text( LOCTEXT( "SMD2OptionsWindow_CurrentAsset", "Current Asset: " ) )
+										]
+										+ SHorizontalBox::Slot( )
+										.Padding( 5, 0, 0, 0 )
+										.AutoWidth( )
+										.VAlign( VAlign_Center )
+										[
+											SNew( STextBlock )
+												.Text( FText::FromString( StartingMD2AssetPath ) )
+												.ToolTipText( FText::FromString( StartingMD2AssetPath ) )
+										]
+								]
 						]
-					]
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
+						[
+							SNew( SHorizontalBox )
+								+ SHorizontalBox::Slot( )
+								.Padding( 6.0f, 3.0f )
+								.FillWidth( 1.0f )
+								.VAlign( VAlign_Center )
+								[
+									SNew( SBorder )
+										.Padding( 4.0f, 10.0f )
+										.BorderImage( FAppStyle::GetBrush( "Menu.Background" ) )
+										.ForegroundColor( FCoreStyle::Get( ).GetSlateColor( "DefaultForeground" ) )
+										[
+											SNew( STextBlock )
+												.Text( FText::FromString( FString( "Textures to Import" ) ) )
+												.Font( FAppStyle::Get( ).GetFontStyle( "BoldFont" ) )
+										]
+								]
+						]
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f, 0.0f, 2.0f, 0.0f )
+						[
+							SNew( SVerticalBox )
+								+ SVerticalBox::Slot( )
+								.AutoHeight( )
+								.Padding( 2.0f, 2.0f, 2.0f, 2.0f )
+								[
+									SNew( SHorizontalBox )
+										+ SHorizontalBox::Slot( )
+										.MaxWidth( 200 )
+										.Padding( 2.0f )
+										.HAlign( HAlign_Left )
+										[
+											SNew( SButton )
+												.Text( LOCTEXT( "SMD2OptionsWindow_AddTexture", "Add Texture" ) )
+												.OnClicked( this, &SMD2OptionsWindow::OnAddTextureWidget )
+										]
+								]
+								+ SVerticalBox::Slot( )
+								[
+									SNew( SBox )
+										.HAlign( HAlign_Left )
+										.VAlign( VAlign_Top )
+										.WidthOverride( InArgs._MaxWindowWidth )
+										.HeightOverride( 500 )
+										[
+											SNew( SScrollBox )
+												+ SScrollBox::Slot( )
+												[
+													SAssignNew( TextureListBox, SVerticalBox )
+												]
+										]
+								]
+						]
+						+ SVerticalBox::Slot( )
+						.AutoHeight( )
+						.Padding( 2.0f )
+						[
+							SNew( SUniformGridPanel )
+								.SlotPadding( 2.0f )
+								+ SUniformGridPanel::Slot( 1, 0 )
+								[
+									SAssignNew( ImportButton, SPrimaryButton )
+										.Text( LOCTEXT( "SMD2OptionsWindow_Import", "Import" ) )
+										.ToolTipText( LOCTEXT( "SMD2OptionsWindow_Import_ToolTip", "Import MD2 file and selected textures" ) )
+										.IsEnabled( this, &SMD2OptionsWindow::CanImport )
+										.OnClicked( this, &SMD2OptionsWindow::OnImport )
+								]
+								+ SUniformGridPanel::Slot( 2, 0 )
+								[
+									SNew( SButton )
+										.HAlign( HAlign_Center )
+										.Text( LOCTEXT( "MD2OptionWindow_Cancel", "Cancel" ) )
+										.ToolTipText( LOCTEXT( "MD2OptionWindow_Cancel_ToolTip", "Cancels importing this MD2 file" ) )
+										.OnClicked( this, &SMD2OptionsWindow::OnCancel )
+								]
+						]
 				]
-				+ SVerticalBox::Slot( )
-				.AutoHeight( )
-				.Padding( 2.0f )
-				[
-					SNew( SUniformGridPanel )
-					.SlotPadding( 2.0f )
-					+ SUniformGridPanel::Slot( 1, 0 )
-					[
-						SAssignNew( ImportButton, SPrimaryButton )
-							.Text( LOCTEXT( "SMD2OptionsWindow_Import", "Import" ) )
-							.ToolTipText( LOCTEXT( "SMD2OptionsWindow_Import_ToolTip", "Import MD2 file and selected textures" ) )
-							.IsEnabled( this, &SMD2OptionsWindow::CanImport )
-							.OnClicked( this, &SMD2OptionsWindow::OnImport )
-					]
-					+ SUniformGridPanel::Slot( 2, 0 )
-					[
-						SNew( SButton )
-							.HAlign( HAlign_Center )
-							.Text( LOCTEXT( "MD2OptionWindow_Cancel", "Cancel" ) )
-							.ToolTipText( LOCTEXT( "MD2OptionWindow_Cancel_ToolTip", "Cancels importing this MD2 file" ) )
-							.OnClicked( this, &SMD2OptionsWindow::OnCancel )
-					]
-				]
-			]
 		];
 
 	BuildTextureListFromData( StartingTextureList );
@@ -239,7 +242,6 @@ void SMD2OptionsWindow::BuildTextureListFromData( TArray<FString>& InTextureList
 void SMD2OptionsWindow::AddTextureSlot( int32 ID, const FString& InTextureName, const FString& InDefaultTextureAssetName, const FString& InDefaultMaterialAssetName, const FString& InStartingMD2FullFilepath )
 {
 	TextureListBox->InsertSlot( 0 )
-	//TextureListBox->AddSlot( )
 		[
 			SNew( SMD2TextureImportWidget )
 				.TextureName( InTextureName )
@@ -378,7 +380,7 @@ FReply SMD2OptionsWindow::OnAddTextureWidget( )
 	return FReply::Handled( );
 }
 
-TSharedPtr<SMD2TextureImportWidget> SMD2OptionsWindow::GetTextureWidgetFromID( int ID )
+TSharedPtr<SMD2TextureImportWidget> SMD2OptionsWindow::GetTextureWidgetFromID( int32 ID )
 {
 	FChildren* Children = TextureListBox->GetChildren( );
 	for ( int32 i = 0; i < Children->Num( ); i++ )

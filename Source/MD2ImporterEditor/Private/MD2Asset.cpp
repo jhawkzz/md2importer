@@ -1,7 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "MD2Asset.h"
 
+// UE Includes
 #include "RawMesh.h"
+
+// Project Includes
 
 const float UMD2Asset::NormalLookup[ PRECAL_NORM ][ 3 ]
 {
@@ -253,7 +256,7 @@ bool UMD2Asset::Load( const FString& MD2Filename )
 void UMD2Asset::GetPCXTextureList( TArray<FString>& OutPCXTextureNames )
 {
 	// copy over the textures this md2 model wants to use
-	for ( int i = 0; i < Model.Header.NumSkins; i++ )
+	for ( int32 i = 0; i < Model.Header.NumSkins; i++ )
 	{
 		FString SkinName( Model.Skins[ i ].Name );
 
@@ -289,7 +292,7 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 	// for now just use the first frame of animation
 
 	// the actual vert data is stored in the frame
-	for ( int i = 0; i < Model.Header.NumVertices; i++ )
+	for ( int32 i = 0; i < Model.Header.NumVertices; i++ )
 	{
 		FMD2Vertex& Vert = Model.Frames[ 0 ].Verts[ i ];
 
@@ -303,7 +306,7 @@ void UMD2Asset::Convert( FRawMesh& OutRawMesh )
 		OutRawMesh.VertexPositions.Add( VertPos );
 	}
 
-	for ( int i = 0; i < Model.Header.NumTris; i++ )
+	for ( int32 i = 0; i < Model.Header.NumTris; i++ )
 	{
 		FMD2Triangle& CurrTri = Model.Triangles[ i ];
 
@@ -372,33 +375,33 @@ void UMD2Asset::UnLoad( void )
 	//remove verts 
 	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
 	{
-		delete[ ] Model.Frames[ i ].Verts;
+		delete[] Model.Frames[ i ].Verts;
 	}
 
 	// cleanup the rest
 	if ( Model.Glcmds != nullptr )
 	{
-		delete[ ] Model.Glcmds;
+		delete[] Model.Glcmds;
 	}
 
 	if ( Model.Frames != nullptr )
 	{
-		delete[ ] Model.Frames;
+		delete[] Model.Frames;
 	}
 
 	if ( Model.Triangles != nullptr )
 	{
-		delete[ ] Model.Triangles;
+		delete[] Model.Triangles;
 	}
 
 	if ( Model.Texcoords != nullptr )
 	{
-		delete[ ] Model.Texcoords;
+		delete[] Model.Texcoords;
 	}
 
 	if ( Model.Skins != nullptr )
 	{
-		delete[ ] Model.Skins;
+		delete[] Model.Skins;
 	}
 
 	memset( &Model, 0, sizeof( Model ) );

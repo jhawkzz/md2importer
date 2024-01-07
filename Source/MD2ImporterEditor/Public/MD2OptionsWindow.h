@@ -2,8 +2,11 @@
 
 #pragma once
 
+// UE Includes
 #include "CoreMinimal.h"
 #include "InputCoreTypes.h"
+
+// Project Includes
 #include "SMD2TextureImportWidget.h"
 
 class SButton;
@@ -84,7 +87,7 @@ private:
 	bool CanImport( ) const;
 	FReply OnResetToDefaultClick( );
 	void BuildTextureListFromData( TArray<FString>& TextureList );
-	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int ID );
+	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int32 ID );
 	FReply OnAddTextureWidget( );
 	void ToggleImportEnabled( bool bEnabled );
 	void OnTextureSet( FSMD2TextureImportWidgetID WidgetID );

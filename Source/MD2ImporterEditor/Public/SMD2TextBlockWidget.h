@@ -2,6 +2,7 @@
 
 #pragma once
 
+// UE Includes
 #include "CoreMinimal.h"
 
 // Simple wrapper for a text block that allows us to style for the look & feel of the plugin.
@@ -10,7 +11,7 @@ class MD2IMPORTEREDITOR_API SMD2TextBlockWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS( SMD2TextBlockWidget )
-		: _Text()
+		: _Text( )
 		{}
 
 		SLATE_ARGUMENT( FText, Text )

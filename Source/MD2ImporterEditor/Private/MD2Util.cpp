@@ -1,8 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "MD2Util.h"
 
+// UE Includes
 #include "ObjectTools.h"
 #include "HAL/PlatformApplicationMisc.h"
+
+// Project Includes
 
 void UMD2Util::GetCenterPosForWindow( FVector2D& OutWindowPos, float InWindowWidth, float InWindowHeight )
 {
