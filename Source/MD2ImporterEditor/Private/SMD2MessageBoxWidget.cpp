@@ -43,7 +43,7 @@ void SMD2MessageBoxWidget::ShowMessageBox( const FString& Title, const FString& 
 		SAssignNew( MD2MessageBoxWidget, SMD2MessageBoxWidget )
 		.WidgetWindow( Window )
 		.Message( Message )
-		.OnMessageBoxClosed(OnClosed)
+		.OnMessageBoxClosed( OnClosed )
 		.AcceptButtonLabel( Accept.Len( ) > 0 ? Accept : TEXT( "Ok" ) )
 		.CancelButtonLabel( Cancel )
 	);

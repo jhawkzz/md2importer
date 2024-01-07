@@ -76,9 +76,6 @@ public:
 		return FReply::Unhandled( );
 	}
 
-	void OnRemoveTextureWidget( FSMD2TextureImportWidgetID WidgetID );
-	void OnTextureNotFound( FSMD2TextureImportWidgetID WidgetID );
-
 	SMD2OptionsWindow( )
 	{}
 
@@ -90,7 +87,8 @@ private:
 	TSharedPtr<SMD2TextureImportWidget> GetTextureWidgetFromID( int32 ID );
 	FReply OnAddTextureWidget( );
 	void ToggleImportEnabled( bool bEnabled );
-	void OnTextureSet( FSMD2TextureImportWidgetID WidgetID );
+	void OnTextureWidgetErrorStateChanged( FSMD2TextureImportWidgetID WidgetID, bool bErrorState );
+	void OnRemoveTextureWidget( FSMD2TextureImportWidgetID WidgetID );
 	void TryEnableImport( );
 	void AddTextureSlot( int32 ID, const FString& InTextureName, const FString& InDefaultTextureAssetName, const FString& InDefaultMaterialAssetName, const FString& InStartingMD2FullFilepath );
 

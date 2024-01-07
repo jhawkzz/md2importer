@@ -184,7 +184,11 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 											SNew( SScrollBox )
 												+ SScrollBox::Slot( )
 												[
-													SAssignNew( TextureListBox, SVerticalBox )
+													SNew( SBox )
+														.WidthOverride( InArgs._MaxWindowWidth )
+														[
+															SAssignNew( TextureListBox, SVerticalBox )
+														]
 												]
 										]
 								]
@@ -250,8 +254,7 @@ void SMD2OptionsWindow::AddTextureSlot( int32 ID, const FString& InTextureName, 
 				.DefaultMaterialAssetName( InDefaultMaterialAssetName )
 				.ParentMeshName( FPaths::GetBaseFilename( InStartingMD2FullFilepath, true ) )
 				.OnTextureWidgetRemoved( this, &SMD2OptionsWindow::OnRemoveTextureWidget )
-				.OnTextureNotFound( this, &SMD2OptionsWindow::OnTextureNotFound )
-				.OnTextureSet( this, &SMD2OptionsWindow::OnTextureSet )
+				.OnErrorStateChanged( this, &SMD2OptionsWindow::OnTextureWidgetErrorStateChanged )
 				.ID( ID )
 		];
 }
@@ -276,6 +279,9 @@ FReply SMD2OptionsWindow::OnResetToDefaultClick( )
 	BuildTextureListFromData( StartingTextureList );
 
 	//todo: restore checkboxes for default mesh options (once they're added)
+
+	// see if it's now ok to import
+	TryEnableImport( );
 
 	return FReply::Handled( );
 }
@@ -322,16 +328,18 @@ void SMD2OptionsWindow::OnRemoveTextureWidget( FSMD2TextureImportWidgetID Widget
 	}
 }
 
-void SMD2OptionsWindow::OnTextureNotFound( FSMD2TextureImportWidgetID WidgetID )
+void SMD2OptionsWindow::OnTextureWidgetErrorStateChanged( FSMD2TextureImportWidgetID WidgetID, bool bErrorState )
 {
-	// if a texture couldn't be found, disable importing until they resolve it
-	ToggleImportEnabled( false );
-}
-
-void SMD2OptionsWindow::OnTextureSet( FSMD2TextureImportWidgetID WidgetID )
-{
-	// we can't just enable the import button, because there could be other textures or systems with issues
-	TryEnableImport( );
+	if ( bErrorState )
+	{
+		// if it's in an error state, we can't import; end of story.
+		ToggleImportEnabled( false );
+	}
+	else
+	{
+		// since this slot exited its error state, we can attempt to enable importing again.
+		TryEnableImport( );
+	}
 }
 
 void SMD2OptionsWindow::TryEnableImport( )
@@ -345,7 +353,7 @@ void SMD2OptionsWindow::TryEnableImport( )
 	{
 		TSharedPtr<SMD2TextureImportWidget> TextWidget = StaticCastSharedRef<SMD2TextureImportWidget>( Children->GetChildAt( i ) );
 
-		if ( TextWidget->TextureFileExists( ) == false )
+		if ( TextWidget->InErrorState( ) == true )
 		{
 			bEnableImport = false;
 			break; //no point in continuing, we know it failed.

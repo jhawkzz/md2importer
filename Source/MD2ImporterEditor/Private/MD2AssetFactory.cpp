@@ -56,11 +56,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 
 	//
 	// TODOs:
-	// Limit editable text field lengths
 	// Expose mesh import options to the UI
-	// Fix styling of filename paths, the ../s are way too much
-	// How to handle them usign a blank asset name and hitting import? (I think maybe just re-create a default one)
-	// I saw the "half sized" texture panel when i imported a Kingpin model. Its when no file names are found in any texture slots.
 	//
 
 	// try to get the full path, but if the inparent is somehow null, at least show the 

@@ -17,8 +17,7 @@ class SMD2EditableTextBoxWidget;
 using FSMD2TextureImportWidgetID = int32;
 
 DECLARE_DELEGATE_OneParam( FOnTextureWidgetRemoved, FSMD2TextureImportWidgetID )
-DECLARE_DELEGATE_OneParam( FOnTextureNotFound, FSMD2TextureImportWidgetID )
-DECLARE_DELEGATE_OneParam( FOnTextureSet, FSMD2TextureImportWidgetID )
+DECLARE_DELEGATE_TwoParams( FOnErrorStateChanged, FSMD2TextureImportWidgetID, bool /*ErrorState*/ )
 
 class MD2IMPORTEREDITOR_API SMD2TextureImportWidget : public SCompoundWidget
 {
@@ -39,8 +38,7 @@ public:
 		SLATE_ARGUMENT( FString, ParentMeshName )
 		SLATE_ARGUMENT( int32, ID )
 		SLATE_EVENT( FOnTextureWidgetRemoved, OnTextureWidgetRemoved )
-		SLATE_EVENT( FOnTextureNotFound, OnTextureNotFound )
-		SLATE_EVENT( FOnTextureSet, OnTextureSet )
+		SLATE_EVENT( FOnErrorStateChanged, OnErrorStateChanged )
 	SLATE_END_ARGS( )
 
 public:
@@ -59,29 +57,33 @@ public:
 		return ID;
 	}
 
-	bool TextureFileExists( )
+	bool InErrorState( )
 	{
-		return bTextureFileExists;
+		return bErrorState;
 	}
 
 private:
-	void SetTextureAssetFilename( const FString& InAssetFilename );
+	void SetTextureImportAndDisplayAssetFilenames( const FString& InAssetFullFilename );
 
 	FReply OnBrowse( );
 	FReply OnRemove( );
+	void OnAssetNameTextChanged( const FText& Text );
+	void SetErrorState( bool bInErrorState );
 
 private:
 	TSharedPtr<SMD2TextBlockWidget> TextureAssetFilenameTB;
 	TSharedPtr<SMD2EditableTextBoxWidget> TextureAssetNameETB;
 	TSharedPtr<SMD2EditableTextBoxWidget> MaterialAssetNameETB;
 	TSharedPtr<SBorder> HeaderBorder;
-	FString TextureFilename;
 	FString DefaultBrowseFilepath;
 	FString ParentMeshName;
 	int32 ID{ -1 };
 	FOnTextureWidgetRemoved OnTextureWidgetRemoved;
-	FOnTextureNotFound OnTextureNotFound;
-	FOnTextureSet OnTextureSet;
-	bool bTextureFileExists{ false };
+	FOnErrorStateChanged OnErrorStateChanged;
+	bool bErrorState{ false };
 	FSlateColor HeaderBorderDefaultBackgroundColor;
+
+	//we differentiate display and import so the user doesn't see a textfield full of "../../../Users/" and nothing useful
+	FString TextureFilenameForDisplay;
+	FString TextureFilenameForImport;
 };

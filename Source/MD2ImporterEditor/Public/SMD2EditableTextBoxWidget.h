@@ -11,8 +11,11 @@ class MD2IMPORTEREDITOR_API SMD2EditableTextBoxWidget : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS( SMD2EditableTextBoxWidget )
 		: _Text( )
+		,_TextLimit(32)
 		{}
 		SLATE_ARGUMENT( FText, Text )
+		SLATE_ARGUMENT( int32, TextLimit )
+		SLATE_EVENT( FOnTextChanged, OnTextChanged )
 	SLATE_END_ARGS( )
 
 public:
@@ -27,7 +30,11 @@ public:
 	}
 
 private:
+	// giving a unique name to differentiate from the forwarding delegate
+	void InternalOnTextChanged( const FText& SearchText );
 
 private:
 	TSharedPtr<SEditableTextBox> EditableTextBox;
+	FOnTextChanged OnTextChanged;
+	int32 TextLimit;
 };
