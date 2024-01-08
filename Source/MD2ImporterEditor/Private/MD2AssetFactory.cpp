@@ -52,9 +52,6 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	FFeedbackContext* Warn,
 	bool& bOutOperationCanceled )
 {
-
-	//todo: SMD2TextureWidget enables import when asset names are filled. needs to check for filename and BOTH asset names.
-
 	// try to get the full path, but if the inparent is somehow null, at least show the 
 	// asset name.
 	if ( InParent == nullptr )

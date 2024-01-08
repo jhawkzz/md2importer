@@ -317,7 +317,13 @@ void SMD2TextureImportWidget::OnAssetNameTextChanged( const FText& Text )
 	}
 	else
 	{
-		SetErrorState( false );
+		// to turn off our error state, ALL text boxes must be filled
+		if( MaterialAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( ).Len( ) > 0
+		&& TextureAssetNameETB->GetEditableTextBox( )->GetText( ).ToString( ).Len( ) > 0
+		&& TextureFilenameForImport.Len() > 0 )
+		{
+			SetErrorState( false );
+		}
 	}
 }
 #undef LOCTEXT_NAMESPACE
