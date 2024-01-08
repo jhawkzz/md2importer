@@ -1,0 +1,1 @@
+Import  MD2 models (Quake II / IDTech2) directly into Unreal Engine! A static mesh is created and is assigned materials that correspond to each imported texture. Customization options are available via import UI.
