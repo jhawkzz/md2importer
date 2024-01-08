@@ -4,6 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "Quake II MD2 Model Importer",
 	"Description": "Import  MD2 models (Quake II / IDTech2) directly into Unreal Engine! A static mesh is created and is assigned materials that correspond to each imported texture. Customization options are available via import UI.",
+	"EngineVersion" : "5.3.2",
 	"Category": "Importers",
 	"CreatedBy": "Jered McFerron",
 	"CreatedByURL": "https://github.com/jhawkzz/md2importer",
@@ -18,7 +19,8 @@
 		{
 			"Name": "MD2ImporterEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64", "Win32" ]
 		}
 	]
 }
