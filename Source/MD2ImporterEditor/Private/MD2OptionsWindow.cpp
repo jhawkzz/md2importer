@@ -100,7 +100,7 @@ void SMD2OptionsWindow::Construct( const FArguments& InArgs )
 												.Padding( FMargin( 2.0f, 0.0f ) )
 												[
 													SNew( SButton )
-														.Text( LOCTEXT( "SMD2OptionsWindow_ResetOptions", "Reset to Default" ) )
+														.Text( FText::FromString( TEXT( "Reset to Default" ) ) )
 														.OnClicked( this, &SMD2OptionsWindow::OnResetToDefaultClick )
 												]
 										]

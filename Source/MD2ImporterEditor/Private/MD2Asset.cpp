@@ -195,17 +195,27 @@ bool UMD2Asset::Load( const FString& MD2Filename )
 	uint8* CurrReadPos = BinaryData.GetData( );
 
 	// read the header
+	if ( BinaryData.Num( ) < sizeof( Model.Header ) )
+	{
+		return false;
+	}
+
 	memcpy( &Model.Header, CurrReadPos, sizeof( Model.Header ) );
 
-	// verify version
-	if ( Model.Header.Ident != MAGIC_NUMBER || Model.Header.Version != MODEL_VERSION ) return false;
+	// verify valid MD2, values are within range, and that the file buffer is within range
+	bool bIsValid = Model.Header.Ident == MAGIC_NUMBER
+		&& Model.Header.Version == MODEL_VERSION
+		&& Model.Header.NumTris <= MAX_TRIANGLES
+		&& Model.Header.NumVertices <= MAX_VERTICES
+		&& Model.Header.NumSt <= MAX_TEXTURE_COORDS
+		&& Model.Header.NumFrames <= MAX_FRAMES
+		&& Model.Header.NumSkins <= MAX_SKINS
+		&& BinaryData.Num( ) >= Model.Header.OffsetEnd;
 
-	// verify max vals
-	if ( Model.Header.NumTris > MAX_TRIANGLES ) return false;
-	if ( Model.Header.NumVertices > MAX_VERTICES ) return false;
-	if ( Model.Header.NumSt > MAX_TEXTURE_COORDS ) return false;
-	if ( Model.Header.NumFrames > MAX_FRAMES ) return false;
-	if ( Model.Header.NumSkins > MAX_SKINS ) return false;
+	if ( bIsValid == false )
+	{
+		return false;
+	}
 
 	// allocate memory
 	Model.Skins = new FMD2Skin[ Model.Header.NumSkins ]; //skins
@@ -375,33 +385,33 @@ void UMD2Asset::UnLoad( void )
 	//remove verts 
 	for ( i = 0; i < (uint32)Model.Header.NumFrames; i++ )
 	{
-		delete[] Model.Frames[ i ].Verts;
+		delete[ ] Model.Frames[ i ].Verts;
 	}
 
 	// cleanup the rest
 	if ( Model.Glcmds != nullptr )
 	{
-		delete[] Model.Glcmds;
+		delete[ ] Model.Glcmds;
 	}
 
 	if ( Model.Frames != nullptr )
 	{
-		delete[] Model.Frames;
+		delete[ ] Model.Frames;
 	}
 
 	if ( Model.Triangles != nullptr )
 	{
-		delete[] Model.Triangles;
+		delete[ ] Model.Triangles;
 	}
 
 	if ( Model.Texcoords != nullptr )
 	{
-		delete[] Model.Texcoords;
+		delete[ ] Model.Texcoords;
 	}
 
 	if ( Model.Skins != nullptr )
 	{
-		delete[] Model.Skins;
+		delete[ ] Model.Skins;
 	}
 
 	memset( &Model, 0, sizeof( Model ) );

@@ -53,11 +53,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 	bool& bOutOperationCanceled )
 {
 
-
-	//
-	// TODOs:
-	// Expose mesh import options to the UI
-	//
+	//todo: SMD2TextureWidget enables import when asset names are filled. needs to check for filename and BOTH asset names.
 
 	// try to get the full path, but if the inparent is somehow null, at least show the 
 	// asset name.
@@ -92,9 +88,9 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		SMD2MessageBoxWidget::ShowMessageBox(
 			TEXT( "MD2 Import Error" ),
 			TEXT( "Failed to open MD2 Asset '" ) + Filename + TEXT( "'. Check the Output Log for more detail." ),
-			TEXT( "Ok" ),
+			TEXT( "OK" ),
 			FString( ),
-			OnClosedResult.CreateLambda( [ this ]( uint32 Result ) { UMD2AssetFactory::OnMBClosedResult( Result ); } ) );
+			OnClosedResult.CreateLambda( [this]( uint32 Result ) { UMD2AssetFactory::OnMBClosedResult( Result ); } ) );
 
 		Warn->Log( ELogVerbosity::Error, TEXT( "MD2 Asset '" ) + Filename + TEXT( "' failed to load. This is likely due to a corrupt or invalid file." ) );
 
@@ -125,7 +121,7 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		SMD2MessageBoxWidget::ShowMessageBox(
 			TEXT( "MD2 Import Error" ),
 			TEXT( "Failed to create Static Mesh from the MD2 Asset. Check the Output Log for more detail." ),
-			TEXT( "Ok" ) );
+			TEXT( "OK" ) );
 
 		Warn->Log( ELogVerbosity::Error, TEXT( "MD2 Asset '" ) + Filename + TEXT( "'loaded, but failed during conversion to a Static Mesh. This could mean the file is corrupt or invalid." ) );
 
@@ -164,14 +160,14 @@ UObject* UMD2AssetFactory::FactoryCreateFile( UClass* InClass,
 		SMD2MessageBoxWidget::ShowMessageBox(
 			TEXT( "MD2 Import Success" ),
 			TEXT( "MD2 Asset imported successfully." ),
-			TEXT( "Ok" ) );
+			TEXT( "OK" ) );
 	}
 	else
 	{
 		SMD2MessageBoxWidget::ShowMessageBox(
 			TEXT( "MD2 Import Success With Warnings" ),
 			TEXT( "MD2 Asset imported successfully with warnings. Please check the Output Log for more detail." ),
-			TEXT( "Ok" ) );
+			TEXT( "OK" ) );
 	}
 
 	return StaticMesh;
@@ -228,12 +224,12 @@ UStaticMesh* UMD2AssetFactory::ImportMD2Asset(
 
 		SourceModel.RawMeshBulkData->SaveRawMesh( RawMesh );
 
-		// Model Configuration - todo: expose these to a UI
+		// Model Configuration - thought about exposing these to UI, but feels like overkill for MD2
 		SourceModel.BuildSettings.bRecomputeNormals = true;
 		SourceModel.BuildSettings.bRecomputeTangents = true;
-		SourceModel.BuildSettings.bUseMikkTSpace = false;
-		SourceModel.BuildSettings.bGenerateLightmapUVs = true;
+		SourceModel.BuildSettings.bUseMikkTSpace = true;
 		SourceModel.BuildSettings.bRemoveDegenerates = true;
+		SourceModel.BuildSettings.bGenerateLightmapUVs = false;
 		SourceModel.BuildSettings.bBuildReversedIndexBuffer = false;
 		SourceModel.BuildSettings.bUseFullPrecisionUVs = false;
 		SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
