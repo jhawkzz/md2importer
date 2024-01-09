@@ -2,7 +2,6 @@
 #include "MD2AssetFactory.h"
 
 // UE Includes
-#include "Engine.h"
 #include "RawMesh.h"
 #include "ObjectTools.h"
 #include "PackageTools.h"
